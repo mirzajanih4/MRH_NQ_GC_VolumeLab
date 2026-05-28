@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv/
+.env/
+
+# PyCharm
+.idea/
+
+# Logs
+*.log
+
+# Data
+data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Build
+build/
+dist/
+
+# Temp
+tmp/
+temp/
