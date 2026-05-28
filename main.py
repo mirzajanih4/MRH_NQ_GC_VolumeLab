@@ -21,12 +21,14 @@ from data.dataset_writer import save_dataset_record
 from engines.analytics_engine import AnalyticsEngine
 from engines.probability_engine import ProbabilityEngine
 from engines.confidence_engine import ConfidenceEngine
+from engines.footprint_engine import FootprintEngine
 volume_engine = VolumeEngine()
 replay_engine = ReplayEngine(volume_engine)
 orderflow_engine = OrderflowEngine(volume_engine)
 risk_engine = RiskEngine()
 context_engine = ContextEngine(volume_engine)
 session_engine = SessionEngine(volume_engine)
+
 nq_strategy = NQStrategy(
     orderflow_engine,
     context_engine,
@@ -84,7 +86,7 @@ def run_scenario(scenario):
     risk_engine = RiskEngine()
     context_engine = ContextEngine(volume_engine)
     session_engine = SessionEngine(volume_engine)
-
+    footprint_engine = FootprintEngine()
     nq_strategy = NQStrategy(
         orderflow_engine,
         context_engine,
@@ -94,7 +96,9 @@ def run_scenario(scenario):
     ticks = get_ticks_by_scenario(scenario)
 
     replay_engine.replay_ticks(ticks, use_delay=False)
-
+    footprint_data = footprint_engine.analyze_footprint(ticks)
+    print("----- Footprint Data -----")
+    print(footprint_data)
     volume_engine.show_status()
     orderflow_engine.show_signals()
     nq_strategy.show_decision(risk_engine)
