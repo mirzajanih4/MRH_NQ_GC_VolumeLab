@@ -189,6 +189,7 @@ def run_scenario(scenario):
         "max_bid_stack": footprint_data["max_bid_stack"],
         "stacked_imbalance": footprint_data["stacked_imbalance"],
         "stack_direction": footprint_data["stack_direction"],
+        "stack_strength": footprint_data["stack_strength"],
         "footprint_score": footprint_data["footprint_score"]
     }
 
