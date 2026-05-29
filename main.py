@@ -233,6 +233,15 @@ print(
     f"{analytics_engine.calculate_average_by_field('footprint_score')}"
 )
 print(
+    f"Average Ask Stack Volume: "
+    f"{analytics_engine.calculate_average_by_field('max_ask_stack_volume')}"
+)
+
+print(
+    f"Average Bid Stack Volume: "
+    f"{analytics_engine.calculate_average_by_field('max_bid_stack_volume')}"
+)
+print(
     f"Win Rate By Setup Type: "
     f"{analytics_engine.calculate_win_rate_by_field('setup_type')}"
 )
@@ -247,6 +256,10 @@ print(
 print(
     f"Win Rate By Stack Direction: "
     f"{analytics_engine.calculate_win_rate_by_field('stack_direction')}"
+)
+print(
+    f"Win Rate By Footprint Score: "
+    f"{analytics_engine.calculate_win_rate_by_field('footprint_score')}"
 )
 print(
     f"Probability A_SETUP: "
