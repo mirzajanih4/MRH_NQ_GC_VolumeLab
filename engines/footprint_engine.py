@@ -13,27 +13,35 @@ class FootprintEngine:
 
         max_ask_stack = 0
         max_bid_stack = 0
+        current_ask_stack_volume = 0
+        current_bid_stack_volume = 0
 
+        max_ask_stack_volume = 0
+        max_bid_stack_volume = 0
         for tick in ticks:
 
             if tick.side == "ASK":
                 buy_aggression += tick.volume
 
                 current_ask_stack += 1
+                current_ask_stack_volume += tick.volume
                 current_bid_stack = 0
-
+                current_bid_stack_volume = 0
                 if current_ask_stack > max_ask_stack:
                     max_ask_stack = current_ask_stack
-
+            if current_ask_stack_volume > max_ask_stack_volume:
+                max_ask_stack_volume = current_ask_stack_volume
             elif tick.side == "BID":
                 sell_aggression += tick.volume
 
                 current_bid_stack += 1
+                current_bid_stack_volume += tick.volume
                 current_ask_stack = 0
-
+                current_ask_stack_volume = 0
                 if current_bid_stack > max_bid_stack:
                     max_bid_stack = current_bid_stack
-
+        if current_bid_stack_volume > max_bid_stack_volume:
+            max_bid_stack_volume = current_bid_stack_volume
         footprint_score = 0
 
         if buy_aggression > sell_aggression:
@@ -83,13 +91,18 @@ class FootprintEngine:
 
         if stacked_imbalance:
 
-            if max_ask_stack >= 5 or max_bid_stack >= 5:
+            max_stack_volume = max(
+                max_ask_stack_volume,
+                max_bid_stack_volume
+            )
+
+            if max_stack_volume >= 100:
                 stack_strength = "HIGH"
 
-            elif max_ask_stack >= 4 or max_bid_stack >= 4:
+            elif max_stack_volume >= 50:
                 stack_strength = "MEDIUM"
 
-            elif max_ask_stack >= 3 or max_bid_stack >= 3:
+            elif max_stack_volume >= 20:
                 stack_strength = "LOW"
 
         footprint_data = {
@@ -102,6 +115,8 @@ class FootprintEngine:
             "absorption_clue": absorption_clue,
             "max_ask_stack": max_ask_stack,
             "max_bid_stack": max_bid_stack,
+            "max_ask_stack_volume": max_ask_stack_volume,
+            "max_bid_stack_volume": max_bid_stack_volume,
             "stacked_imbalance": stacked_imbalance,
             "stack_direction": stack_direction,
             "stack_strength": stack_strength,

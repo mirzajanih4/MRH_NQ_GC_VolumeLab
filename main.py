@@ -187,6 +187,8 @@ def run_scenario(scenario):
         "absorption_clue": footprint_data["absorption_clue"],
         "max_ask_stack": footprint_data["max_ask_stack"],
         "max_bid_stack": footprint_data["max_bid_stack"],
+        "max_ask_stack_volume": footprint_data["max_ask_stack_volume"],
+        "max_bid_stack_volume": footprint_data["max_bid_stack_volume"],
         "stacked_imbalance": footprint_data["stacked_imbalance"],
         "stack_direction": footprint_data["stack_direction"],
         "stack_strength": footprint_data["stack_strength"],
