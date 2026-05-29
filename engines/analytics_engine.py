@@ -108,3 +108,21 @@ class AnalyticsEngine:
             return 0
 
         return round(total_confidence / count, 2)
+
+    def calculate_average_by_field(self, field_name):
+
+        records = self.load_records()
+
+        total_value = 0
+        count = 0
+
+        for record in records:
+
+            if field_name in record and record[field_name] != "":
+                total_value += float(record[field_name])
+                count += 1
+
+        if count == 0:
+            return 0
+
+        return round(total_value / count, 2)

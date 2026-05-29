@@ -179,7 +179,13 @@ def run_scenario(scenario):
         "main_block_reason": main_block_reason,
         "total_ticks": len(volume_engine.ticks),
         "total_volume": volume_engine.ask_volume + volume_engine.bid_volume,
-        "final_cvd": volume_engine.cvd
+        "final_cvd": volume_engine.cvd,
+        "buy_aggression": footprint_data["buy_aggression"],
+        "sell_aggression": footprint_data["sell_aggression"],
+        "bid_ask_imbalance": footprint_data["bid_ask_imbalance"],
+        "delta_exhaustion": footprint_data["delta_exhaustion"],
+        "absorption_clue": footprint_data["absorption_clue"],
+        "footprint_score": footprint_data["footprint_score"]
 
     }
 
@@ -212,6 +218,10 @@ print(f"Win Rate: {analytics_engine.calculate_win_rate()}%")
 print(
     f"Average Confidence: "
     f"{analytics_engine.calculate_average_confidence()}"
+)
+print(
+    f"Average Footprint Score: "
+    f"{analytics_engine.calculate_average_by_field('footprint_score')}"
 )
 print(
     f"Win Rate By Setup Type: "
