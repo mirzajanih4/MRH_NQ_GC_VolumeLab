@@ -218,6 +218,9 @@ print(f"Final Signal Counts: {analytics_engine.count_by_field('final_signal')}")
 print(f"Setup Type Counts: {analytics_engine.count_by_field('setup_type')}")
 print(f"Setup Grade Counts: {analytics_engine.count_by_field('setup_grade')}")
 print(f"Trade Outcome Counts: {analytics_engine.count_by_field('trade_outcome')}")
+print(f"Stacked Imbalance Counts: {analytics_engine.count_by_field('stacked_imbalance')}")
+print(f"Stack Direction Counts: {analytics_engine.count_by_field('stack_direction')}")
+print(f"Stack Strength Counts: {analytics_engine.count_by_field('stack_strength')}")
 print(f"Win Rate: {analytics_engine.calculate_win_rate()}%")
 print(
     f"Average Confidence: "
@@ -234,6 +237,14 @@ print(
 print(
     f"Win Rate By Setup Grade: "
     f"{analytics_engine.calculate_win_rate_by_field('setup_grade')}"
+)
+print(
+    f"Win Rate By Stack Strength: "
+    f"{analytics_engine.calculate_win_rate_by_field('stack_strength')}"
+)
+print(
+    f"Win Rate By Stack Direction: "
+    f"{analytics_engine.calculate_win_rate_by_field('stack_direction')}"
 )
 print(
     f"Probability A_SETUP: "
