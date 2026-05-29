@@ -185,8 +185,10 @@ def run_scenario(scenario):
         "bid_ask_imbalance": footprint_data["bid_ask_imbalance"],
         "delta_exhaustion": footprint_data["delta_exhaustion"],
         "absorption_clue": footprint_data["absorption_clue"],
+        "max_ask_stack": footprint_data["max_ask_stack"],
+        "max_bid_stack": footprint_data["max_bid_stack"],
+        "stacked_imbalance": footprint_data["stacked_imbalance"],
         "footprint_score": footprint_data["footprint_score"]
-
     }
 
     print("----- Dataset Record -----")

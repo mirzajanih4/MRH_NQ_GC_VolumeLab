@@ -7,14 +7,29 @@ class FootprintEngine:
 
         buy_aggression = 0
         sell_aggression = 0
-
+        current_ask_stack = 0
+        current_bid_stack = 0
+        max_ask_stack = 0
+        max_bid_stack = 0
         for tick in ticks:
 
             if tick.side == "ASK":
                 buy_aggression += tick.volume
 
+                current_ask_stack += 1
+                current_bid_stack = 0
+
+                if current_ask_stack > max_ask_stack:
+                    max_ask_stack = current_ask_stack
+
             elif tick.side == "BID":
                 sell_aggression += tick.volume
+
+                current_bid_stack += 1
+                current_ask_stack = 0
+
+                if current_bid_stack > max_bid_stack:
+                    max_bid_stack = current_bid_stack
 
         footprint_score = 0
 
@@ -26,7 +41,11 @@ class FootprintEngine:
 
         if abs(buy_aggression - sell_aggression) >= 20:
             footprint_score += 0.5
-
+        if (
+                max_ask_stack >= 3
+                or max_bid_stack >= 3
+        ):
+            footprint_score += 0.5
         delta_exhaustion = False
 
         if (
@@ -43,7 +62,13 @@ class FootprintEngine:
                 and buy_aggression > sell_aggression
         ):
             absorption_clue = True
+        stacked_imbalance = False
 
+        if (
+                max_ask_stack >= 3
+                or max_bid_stack >= 3
+        ):
+            stacked_imbalance = True
         footprint_data = {
             "buy_aggression": buy_aggression,
             "sell_aggression": sell_aggression,
@@ -52,6 +77,10 @@ class FootprintEngine:
             ),
             "delta_exhaustion": delta_exhaustion,
             "absorption_clue": absorption_clue,
+            "max_ask_stack": max_ask_stack,
+            "max_bid_stack": max_bid_stack,
+            "stacked_imbalance": stacked_imbalance,
             "footprint_score": footprint_score
+
         }
         return footprint_data
