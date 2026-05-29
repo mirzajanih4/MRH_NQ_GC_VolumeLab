@@ -63,12 +63,15 @@ class FootprintEngine:
         ):
             absorption_clue = True
         stacked_imbalance = False
+        stack_direction = "NONE"
 
-        if (
-                max_ask_stack >= 3
-                or max_bid_stack >= 3
-        ):
+        if max_ask_stack >= 3:
             stacked_imbalance = True
+            stack_direction = "BUY"
+
+        elif max_bid_stack >= 3:
+            stacked_imbalance = True
+            stack_direction = "SELL"
         footprint_data = {
             "buy_aggression": buy_aggression,
             "sell_aggression": sell_aggression,
@@ -80,6 +83,7 @@ class FootprintEngine:
             "max_ask_stack": max_ask_stack,
             "max_bid_stack": max_bid_stack,
             "stacked_imbalance": stacked_imbalance,
+            "stack_direction": stack_direction,
             "footprint_score": footprint_score
 
         }
