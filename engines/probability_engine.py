@@ -45,3 +45,16 @@ class ProbabilityEngine:
             return win_rates[stack_strength]
 
         return 0
+
+    def get_probability_by_footprint_score(self, footprint_score):
+
+        win_rates = self.analytics_engine.calculate_win_rate_by_field(
+            "footprint_score"
+        )
+
+        footprint_score = str(footprint_score)
+
+        if footprint_score in win_rates:
+            return win_rates[footprint_score]
+
+        return 0

@@ -362,3 +362,17 @@ print(
     f"Probability STACK_HIGH: "
     f"{probability_engine.get_probability_by_stack_strength('HIGH')}%"
 )
+print(
+    f"Probability FOOTPRINT_0_5: "
+    f"{probability_engine.get_probability_by_footprint_score(0.5)}%"
+)
+
+print(
+    f"Probability FOOTPRINT_1_0: "
+    f"{probability_engine.get_probability_by_footprint_score(1.0)}%"
+)
+
+print(
+    f"Probability FOOTPRINT_1_5: "
+    f"{probability_engine.get_probability_by_footprint_score(1.5)}%"
+)
