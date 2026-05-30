@@ -1,11 +1,13 @@
 class ConfidenceEngine:
 
     def calculate_confidence(
-        self,
-        orderflow_score,
-        setup_grade,
-        volume_node,
-        session
+            self,
+            orderflow_score,
+            setup_grade,
+            volume_node,
+            session,
+            footprint_score,
+            stack_strength
     ):
 
         confidence = 0
@@ -24,6 +26,15 @@ class ConfidenceEngine:
         if session == "NEW_YORK":
             confidence += 10
 
+        confidence += footprint_score * 10
+        if stack_strength == "LOW":
+            confidence += 2
+
+        elif stack_strength == "MEDIUM":
+            confidence += 5
+
+        elif stack_strength == "HIGH":
+            confidence += 10
         if confidence > 100:
             confidence = 100
 

@@ -155,11 +155,13 @@ def run_scenario(scenario):
         trade_outcome = "LOSS"
 
     confidence_score = confidence_engine.calculate_confidence(
-            orderflow_engine.calculate_score(),
-            nq_strategy.grade_setup(),
-            context_engine.detect_volume_node(),
-            session_engine.detect_session()
-        )
+        orderflow_engine.calculate_score(),
+        nq_strategy.grade_setup(),
+        context_engine.detect_volume_node(),
+        session_engine.detect_session(),
+        footprint_data["footprint_score"],
+        footprint_data["stack_strength"]
+    )
     dataset_record = {
         "scenario": scenario,
         "final_signal": nq_strategy.get_final_signal(risk_engine),
