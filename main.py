@@ -264,6 +264,18 @@ print(
     f"{analytics_engine.calculate_win_rate_by_field('footprint_score')}"
 )
 print(
+    f"Win Rate By Confidence Score: "
+    f"{analytics_engine.calculate_win_rate_by_field('confidence_score')}"
+)
+print(
+    f"Confidence Bucket Counts: "
+    f"{analytics_engine.count_confidence_buckets()}"
+)
+print(
+    f"Win Rate By Confidence Bucket: "
+    f"{analytics_engine.calculate_win_rate_by_confidence_bucket()}"
+)
+print(
     f"Probability A_SETUP: "
     f"{probability_engine.get_probability_by_setup_grade('A_SETUP')}%"
 )

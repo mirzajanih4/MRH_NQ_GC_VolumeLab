@@ -126,3 +126,80 @@ class AnalyticsEngine:
             return 0
 
         return round(total_value / count, 2)
+
+    def count_confidence_buckets(self):
+
+        records = self.load_records()
+        buckets = {
+            "LOW_CONFIDENCE": 0,
+            "MEDIUM_CONFIDENCE": 0,
+            "HIGH_CONFIDENCE": 0,
+            "ELITE_CONFIDENCE": 0
+        }
+
+        for record in records:
+
+            confidence = float(record["confidence_score"])
+
+            if confidence < 40:
+                buckets["LOW_CONFIDENCE"] += 1
+
+            elif confidence < 70:
+                buckets["MEDIUM_CONFIDENCE"] += 1
+
+            elif confidence < 90:
+                buckets["HIGH_CONFIDENCE"] += 1
+
+            else:
+                buckets["ELITE_CONFIDENCE"] += 1
+
+        return buckets
+
+    def calculate_win_rate_by_confidence_bucket(self):
+
+        records = self.load_records()
+
+        stats = {
+            "LOW_CONFIDENCE": {"wins": 0, "losses": 0},
+            "MEDIUM_CONFIDENCE": {"wins": 0, "losses": 0},
+            "HIGH_CONFIDENCE": {"wins": 0, "losses": 0},
+            "ELITE_CONFIDENCE": {"wins": 0, "losses": 0}
+        }
+
+        for record in records:
+
+            confidence = float(record["confidence_score"])
+            outcome = record["trade_outcome"]
+
+            if confidence < 40:
+                bucket = "LOW_CONFIDENCE"
+
+            elif confidence < 70:
+                bucket = "MEDIUM_CONFIDENCE"
+
+            elif confidence < 90:
+                bucket = "HIGH_CONFIDENCE"
+
+            else:
+                bucket = "ELITE_CONFIDENCE"
+
+            if outcome == "WIN":
+                stats[bucket]["wins"] += 1
+
+            elif outcome == "LOSS":
+                stats[bucket]["losses"] += 1
+
+        win_rates = {}
+
+        for bucket, result in stats.items():
+
+            wins = result["wins"]
+            losses = result["losses"]
+            total = wins + losses
+
+            if total == 0:
+                win_rates[bucket] = 0
+            else:
+                win_rates[bucket] = round((wins / total) * 100, 2)
+
+        return win_rates
