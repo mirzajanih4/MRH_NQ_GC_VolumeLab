@@ -162,6 +162,17 @@ def run_scenario(scenario):
         footprint_data["footprint_score"],
         footprint_data["stack_strength"]
     )
+    if confidence_score < 40:
+        trade_quality = "LOW_QUALITY"
+
+    elif confidence_score < 70:
+        trade_quality = "MEDIUM_QUALITY"
+
+    elif confidence_score < 90:
+        trade_quality = "HIGH_QUALITY"
+
+    else:
+        trade_quality = "ELITE_QUALITY"
     dataset_record = {
         "scenario": scenario,
         "final_signal": nq_strategy.get_final_signal(risk_engine),
@@ -169,6 +180,7 @@ def run_scenario(scenario):
         "setup_type": nq_strategy.classify_setup(),
         "setup_grade": nq_strategy.grade_setup(),
         "confidence_score": confidence_score,
+        "trade_quality": trade_quality,
         "orderflow_score": orderflow_engine.calculate_score(),
         "required_score": risk_engine.get_required_score(
             session_engine.detect_session()
@@ -276,6 +288,15 @@ print(
     f"{analytics_engine.calculate_win_rate_by_confidence_bucket()}"
 )
 print(
+    f"Trade Quality Counts: "
+    f"{analytics_engine.count_by_field('trade_quality')}"
+)
+
+print(
+    f"Win Rate By Trade Quality: "
+    f"{analytics_engine.calculate_win_rate_by_field('trade_quality')}"
+)
+print(
     f"Probability A_SETUP: "
     f"{probability_engine.get_probability_by_setup_grade('A_SETUP')}%"
 )
@@ -302,4 +323,23 @@ print(
 print(
     f"Probability ABSORPTION_SETUP: "
     f"{probability_engine.get_probability_by_setup_type('ABSORPTION_SETUP')}%"
+)
+print(
+    f"Probability LOW_QUALITY: "
+    f"{probability_engine.get_probability_by_trade_quality('LOW_QUALITY')}%"
+)
+
+print(
+    f"Probability MEDIUM_QUALITY: "
+    f"{probability_engine.get_probability_by_trade_quality('MEDIUM_QUALITY')}%"
+)
+
+print(
+    f"Probability HIGH_QUALITY: "
+    f"{probability_engine.get_probability_by_trade_quality('HIGH_QUALITY')}%"
+)
+
+print(
+    f"Probability ELITE_QUALITY: "
+    f"{probability_engine.get_probability_by_trade_quality('ELITE_QUALITY')}%"
 )
