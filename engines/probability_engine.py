@@ -34,3 +34,14 @@ class ProbabilityEngine:
             return win_rates[trade_quality]
 
         return 0
+
+    def get_probability_by_stack_strength(self, stack_strength):
+
+        win_rates = self.analytics_engine.calculate_win_rate_by_field(
+            "stack_strength"
+        )
+
+        if stack_strength in win_rates:
+            return win_rates[stack_strength]
+
+        return 0

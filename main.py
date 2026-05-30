@@ -343,3 +343,22 @@ print(
     f"Probability ELITE_QUALITY: "
     f"{probability_engine.get_probability_by_trade_quality('ELITE_QUALITY')}%"
 )
+print(
+    f"Probability STACK_NONE: "
+    f"{probability_engine.get_probability_by_stack_strength('NONE')}%"
+)
+
+print(
+    f"Probability STACK_LOW: "
+    f"{probability_engine.get_probability_by_stack_strength('LOW')}%"
+)
+
+print(
+    f"Probability STACK_MEDIUM: "
+    f"{probability_engine.get_probability_by_stack_strength('MEDIUM')}%"
+)
+
+print(
+    f"Probability STACK_HIGH: "
+    f"{probability_engine.get_probability_by_stack_strength('HIGH')}%"
+)
