@@ -82,3 +82,44 @@ class ProbabilityEngine:
             return win_rates[key]
 
         return 0
+
+    def build_probability_model_snapshot(self):
+
+        snapshot = {}
+
+        snapshot["setup_grade"] = (
+            self.analytics_engine
+            .calculate_win_rate_by_field(
+                "setup_grade"
+            )
+        )
+
+        snapshot["setup_type"] = (
+            self.analytics_engine
+            .calculate_win_rate_by_field(
+                "setup_type"
+            )
+        )
+
+        snapshot["trade_quality"] = (
+            self.analytics_engine
+            .calculate_win_rate_by_field(
+                "trade_quality"
+            )
+        )
+
+        snapshot["stack_strength"] = (
+            self.analytics_engine
+            .calculate_win_rate_by_field(
+                "stack_strength"
+            )
+        )
+
+        snapshot["footprint_score"] = (
+            self.analytics_engine
+            .calculate_win_rate_by_field(
+                "footprint_score"
+            )
+        )
+
+        return snapshot

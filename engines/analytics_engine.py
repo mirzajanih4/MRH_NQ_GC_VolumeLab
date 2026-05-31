@@ -372,3 +372,27 @@ class AnalyticsEngine:
             )
 
         return distribution
+
+    def build_snapshot_quality_snapshot(self):
+
+        snapshot = {}
+
+        snapshot["trade_labels"] = (
+            self.count_by_field(
+                "trade_label"
+            )
+        )
+
+        snapshot["setup_grades"] = (
+            self.count_by_field(
+                "setup_grade"
+            )
+        )
+
+        snapshot["trade_qualities"] = (
+            self.count_by_field(
+                "trade_quality"
+            )
+        )
+
+        return snapshot

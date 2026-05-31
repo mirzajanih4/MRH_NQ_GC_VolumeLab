@@ -514,3 +514,42 @@ for item in analytics_engine.build_ranked_feature_importance():
         print(
             analytics_engine.build_label_distribution()
         )
+        print("\n----- Snapshot Quality Snapshot -----")
+
+        print(
+            analytics_engine.build_snapshot_quality_snapshot()
+        )
+print("\n----- Probability Model Snapshot -----")
+
+probability_model_snapshot = (
+    probability_engine.build_probability_model_snapshot()
+)
+
+print(probability_model_snapshot)
+probability_model_file = "data/probability_model_snapshot.csv"
+
+with open(
+        probability_model_file,
+        mode="w",
+        newline=""
+) as file:
+
+    writer = csv.writer(file)
+
+    writer.writerow([
+        "feature",
+        "value",
+        "probability"
+    ])
+
+    for feature_name, values in probability_model_snapshot.items():
+
+        for value_name, probability in values.items():
+
+            writer.writerow([
+                feature_name,
+                value_name,
+                probability
+            ])
+
+print("Probability Model Snapshot saved.")
