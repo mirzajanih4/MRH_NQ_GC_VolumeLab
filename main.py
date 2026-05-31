@@ -94,6 +94,9 @@ def run_scenario(scenario):
         session_engine
     )
     confidence_engine = ConfidenceEngine()
+    analytics_engine = AnalyticsEngine("data/replay_results.csv")
+    probability_engine = ProbabilityEngine(analytics_engine)
+
     ticks = get_ticks_by_scenario(scenario)
 
     replay_engine.replay_ticks(ticks, use_delay=False)
@@ -219,6 +222,13 @@ def run_scenario(scenario):
         "stack_strength": footprint_data["stack_strength"],
         "footprint_score": footprint_data["footprint_score"]
     }
+    probability_score = probability_engine.calculate_probability_score(
+        dataset_record["setup_grade"],
+        dataset_record["setup_type"],
+        dataset_record["trade_quality"],
+        dataset_record["stack_strength"],
+        dataset_record["footprint_score"]
+    )
     trade_snapshot = {
 
         "setup_grade":
@@ -232,7 +242,8 @@ def run_scenario(scenario):
 
         "trade_quality":
             dataset_record["trade_quality"],
-
+        "probability_score":
+            probability_score,
         "footprint_score":
             dataset_record["footprint_score"],
 

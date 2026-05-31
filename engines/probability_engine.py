@@ -123,3 +123,52 @@ class ProbabilityEngine:
         )
 
         return snapshot
+
+    def calculate_probability_score(
+            self,
+            setup_grade,
+            setup_type,
+            trade_quality,
+            stack_strength,
+            footprint_score
+    ):
+
+        probabilities = []
+
+        probabilities.append(
+            self.get_probability_by_setup_grade(
+                setup_grade
+            )
+        )
+
+        probabilities.append(
+            self.get_probability_by_setup_type(
+                setup_type
+            )
+        )
+
+        probabilities.append(
+            self.get_probability_by_trade_quality(
+                trade_quality
+            )
+        )
+
+        probabilities.append(
+            self.get_probability_by_stack_strength(
+                stack_strength
+            )
+        )
+
+        probabilities.append(
+            self.get_probability_by_footprint_score(
+                footprint_score
+            )
+        )
+
+        if len(probabilities) == 0:
+            return 0
+
+        return round(
+            sum(probabilities) / len(probabilities),
+            2
+        )
