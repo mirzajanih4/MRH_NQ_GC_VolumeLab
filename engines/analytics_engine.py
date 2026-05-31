@@ -420,3 +420,38 @@ class AnalyticsEngine:
         )
 
         return dashboard
+
+
+    def build_probability_score_distribution(self):
+
+        records = self.load_records()
+
+        distribution = {
+            "0_25": 0,
+            "25_50": 0,
+            "50_75": 0,
+            "75_100": 0
+        }
+
+        for record in records:
+
+            score = float(
+                record.get(
+                    "weighted_probability_score",
+                    0
+                )
+            )
+
+            if score < 25:
+                distribution["0_25"] += 1
+
+            elif score < 50:
+                distribution["25_50"] += 1
+
+            elif score < 75:
+                distribution["50_75"] += 1
+
+            else:
+                distribution["75_100"] += 1
+
+        return distribution

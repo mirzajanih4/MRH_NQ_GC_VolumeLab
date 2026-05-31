@@ -558,6 +558,12 @@ for item in analytics_engine.build_ranked_feature_importance():
         print(
             analytics_engine.build_ml_dataset_quality_dashboard()
         )
+        print("\n----- Probability Score Distribution -----")
+
+        print(
+            analytics_engine
+            .build_probability_score_distribution()
+        )
 print("\n----- Probability Model Snapshot -----")
 
 probability_model_snapshot = (
