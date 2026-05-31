@@ -15,6 +15,7 @@ from data.sample_ticks import (
     get_sample_sweep_absorption_ticks,
     get_sample_sell_lvn_ticks
 )
+import csv
 from data.csv_loader import load_ticks_from_csv
 from engines.session_engine import SessionEngine
 from data.dataset_writer import save_dataset_record
@@ -153,7 +154,14 @@ def run_scenario(scenario):
 
     else:
         trade_outcome = "LOSS"
+    if trade_outcome == "WIN":
+        trade_label = "WIN"
 
+    elif trade_outcome == "LOSS":
+        trade_label = "LOSS"
+
+    else:
+        trade_label = "SKIPPED"
     confidence_score = confidence_engine.calculate_confidence(
         orderflow_engine.calculate_score(),
         nq_strategy.grade_setup(),
@@ -173,10 +181,13 @@ def run_scenario(scenario):
 
     else:
         trade_quality = "ELITE_QUALITY"
+
+
     dataset_record = {
         "scenario": scenario,
         "final_signal": nq_strategy.get_final_signal(risk_engine),
         "trade_outcome": trade_outcome,
+        "trade_label": trade_label,
         "setup_type": nq_strategy.classify_setup(),
         "setup_grade": nq_strategy.grade_setup(),
         "confidence_score": confidence_score,
@@ -208,9 +219,55 @@ def run_scenario(scenario):
         "stack_strength": footprint_data["stack_strength"],
         "footprint_score": footprint_data["footprint_score"]
     }
+    trade_snapshot = {
 
+        "setup_grade":
+            dataset_record["setup_grade"],
+
+        "setup_type":
+            dataset_record["setup_type"],
+
+        "confidence_score":
+            dataset_record["confidence_score"],
+
+        "trade_quality":
+            dataset_record["trade_quality"],
+
+        "footprint_score":
+            dataset_record["footprint_score"],
+
+        "stack_strength":
+            dataset_record["stack_strength"],
+
+        "trade_outcome":
+            dataset_record["trade_outcome"],
+
+        "trade_label":
+            dataset_record["trade_label"]
+    }
     print("----- Dataset Record -----")
     print(dataset_record)
+    print("----- Trade Snapshot -----")
+    print(trade_snapshot)
+    ml_snapshot_file = "data/ml_trade_snapshots.csv"
+
+    with open(
+            ml_snapshot_file,
+            mode="a",
+            newline=""
+    ) as file:
+
+        writer = csv.DictWriter(
+            file,
+            fieldnames=trade_snapshot.keys()
+        )
+
+        if file.tell() == 0:
+            writer.writeheader()
+
+        writer.writerow(trade_snapshot)
+
+        print("ML Snapshot saved.")
 
     save_dataset_record(
         "data/replay_results.csv",
@@ -446,4 +503,14 @@ for item in analytics_engine.build_ranked_feature_importance():
 
         print(
             analytics_engine.build_ml_readiness_snapshot()
+        )
+        print("\n----- Trade Label Counts -----")
+
+        print(
+            analytics_engine.count_by_field(
+                "trade_label"
+            )
+        )
+        print(
+            analytics_engine.build_label_distribution()
         )

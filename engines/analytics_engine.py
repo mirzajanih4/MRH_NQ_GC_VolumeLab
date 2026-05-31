@@ -354,3 +354,21 @@ class AnalyticsEngine:
         }
 
         return snapshot
+
+    def build_label_distribution(self):
+
+        counts = self.count_by_field(
+            "trade_label"
+        )
+
+        total = sum(counts.values())
+
+        distribution = {}
+
+        for label, count in counts.items():
+            distribution[label] = round(
+                (count / total) * 100,
+                2
+            )
+
+        return distribution
