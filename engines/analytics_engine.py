@@ -396,3 +396,27 @@ class AnalyticsEngine:
         )
 
         return snapshot
+
+    def build_ml_dataset_quality_dashboard(self):
+
+        dashboard = {}
+
+        dashboard["trade_labels"] = (
+            self.count_by_field(
+                "trade_label"
+            )
+        )
+
+        dashboard["trade_qualities"] = (
+            self.count_by_field(
+                "trade_quality"
+            )
+        )
+
+        dashboard["probability_grades"] = (
+            self.count_by_field(
+                "probability_grade"
+            )
+        )
+
+        return dashboard

@@ -195,6 +195,7 @@ def run_scenario(scenario):
         "setup_grade": nq_strategy.grade_setup(),
         "confidence_score": confidence_score,
         "trade_quality": trade_quality,
+
         "orderflow_score": orderflow_engine.calculate_score(),
         "required_score": risk_engine.get_required_score(
             session_engine.detect_session()
@@ -244,6 +245,9 @@ def run_scenario(scenario):
             weighted_probability_score
         )
     )
+    dataset_record["probability_score"] = probability_score
+    dataset_record["weighted_probability_score"] = weighted_probability_score
+    dataset_record["probability_grade"] = probability_grade
     trade_snapshot = {
 
         "setup_grade":
@@ -548,6 +552,11 @@ for item in analytics_engine.build_ranked_feature_importance():
 
         print(
             analytics_engine.build_snapshot_quality_snapshot()
+        )
+        print("\n----- ML Dataset Quality Dashboard -----")
+
+        print(
+            analytics_engine.build_ml_dataset_quality_dashboard()
         )
 print("\n----- Probability Model Snapshot -----")
 
