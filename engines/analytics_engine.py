@@ -203,3 +203,53 @@ class AnalyticsEngine:
                 win_rates[bucket] = round((wins / total) * 100, 2)
 
         return win_rates
+
+    def calculate_win_rate_by_combined_fields(
+            self,
+            field_one,
+            field_two
+    ):
+
+        records = self.load_records()
+        stats = {}
+
+        for record in records:
+
+            combined_key = (
+                f"{record[field_one]}|"
+                f"{record[field_two]}"
+            )
+
+            outcome = record["trade_outcome"]
+
+            if combined_key not in stats:
+                stats[combined_key] = {
+                    "wins": 0,
+                    "losses": 0
+                }
+
+            if outcome == "WIN":
+                stats[combined_key]["wins"] += 1
+
+            elif outcome == "LOSS":
+                stats[combined_key]["losses"] += 1
+
+        win_rates = {}
+
+        for key, result in stats.items():
+
+            wins = result["wins"]
+            losses = result["losses"]
+
+            total = wins + losses
+
+            if total == 0:
+                win_rates[key] = 0
+
+            else:
+                win_rates[key] = round(
+                    (wins / total) * 100,
+                    2
+                )
+
+        return win_rates

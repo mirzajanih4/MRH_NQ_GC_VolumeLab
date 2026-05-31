@@ -58,3 +58,27 @@ class ProbabilityEngine:
             return win_rates[footprint_score]
 
         return 0
+
+    def get_probability_by_quality_and_footprint(
+            self,
+            trade_quality,
+            footprint_score
+    ):
+
+        win_rates = (
+            self.analytics_engine
+            .calculate_win_rate_by_combined_fields(
+                "trade_quality",
+                "footprint_score"
+            )
+        )
+
+        key = (
+            f"{trade_quality}|"
+            f"{footprint_score}"
+        )
+
+        if key in win_rates:
+            return win_rates[key]
+
+        return 0

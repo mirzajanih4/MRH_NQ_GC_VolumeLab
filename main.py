@@ -297,6 +297,13 @@ print(
     f"{analytics_engine.calculate_win_rate_by_field('trade_quality')}"
 )
 print(
+    f"Win Rate By Quality + Footprint: "
+    f"{analytics_engine.calculate_win_rate_by_combined_fields(
+        'trade_quality',
+        'footprint_score'
+    )}"
+)
+print(
     f"Probability A_SETUP: "
     f"{probability_engine.get_probability_by_setup_grade('A_SETUP')}%"
 )
@@ -375,4 +382,19 @@ print(
 print(
     f"Probability FOOTPRINT_1_5: "
     f"{probability_engine.get_probability_by_footprint_score(1.5)}%"
+)
+print(
+    f"Probability ELITE_1_0: "
+    f"{probability_engine.get_probability_by_quality_and_footprint(
+        'ELITE_QUALITY',
+        '1.0'
+    )}%"
+)
+
+print(
+    f"Probability MEDIUM_1_5: "
+    f"{probability_engine.get_probability_by_quality_and_footprint(
+        'MEDIUM_QUALITY',
+        '1.5'
+    )}%"
 )
