@@ -229,6 +229,16 @@ def run_scenario(scenario):
         dataset_record["stack_strength"],
         dataset_record["footprint_score"]
     )
+    weighted_probability_score = (
+        probability_engine
+        .calculate_weighted_probability_score(
+            dataset_record["setup_grade"],
+            dataset_record["setup_type"],
+            dataset_record["trade_quality"],
+            dataset_record["stack_strength"],
+            dataset_record["footprint_score"]
+        )
+    )
     trade_snapshot = {
 
         "setup_grade":
@@ -244,6 +254,8 @@ def run_scenario(scenario):
             dataset_record["trade_quality"],
         "probability_score":
             probability_score,
+        "weighted_probability_score":
+            weighted_probability_score,
         "footprint_score":
             dataset_record["footprint_score"],
 
