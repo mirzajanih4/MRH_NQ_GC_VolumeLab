@@ -398,3 +398,43 @@ print(
         '1.5'
     )}%"
 )
+print("\n----- Feature Ranking Snapshot -----")
+
+print(
+    f"Setup Grade Win Rates: "
+    f"{analytics_engine.calculate_win_rate_by_field('setup_grade')}"
+)
+
+print(
+    f"Setup Type Win Rates: "
+    f"{analytics_engine.calculate_win_rate_by_field('setup_type')}"
+)
+
+print(
+    f"Trade Quality Win Rates: "
+    f"{analytics_engine.calculate_win_rate_by_field('trade_quality')}"
+)
+
+print(
+    f"Stack Strength Win Rates: "
+    f"{analytics_engine.calculate_win_rate_by_field('stack_strength')}"
+)
+
+print(
+    f"Footprint Score Win Rates: "
+    f"{analytics_engine.calculate_win_rate_by_field('footprint_score')}"
+)
+
+print(
+    f"Confidence Bucket Win Rates: "
+    f"{analytics_engine.calculate_win_rate_by_confidence_bucket()}"
+)
+print("\n----- Feature Importance Engine -----")
+
+print(
+    analytics_engine.build_feature_importance_snapshot()
+)
+print("\n----- Ranked Feature Importance -----")
+
+for item in analytics_engine.build_ranked_feature_importance():
+    print(item)

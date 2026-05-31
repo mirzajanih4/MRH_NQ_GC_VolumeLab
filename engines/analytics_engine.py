@@ -253,3 +253,66 @@ class AnalyticsEngine:
                 )
 
         return win_rates
+
+    def build_feature_importance_snapshot(self):
+
+        snapshot = {}
+
+        snapshot["setup_grade"] = (
+            self.calculate_win_rate_by_field(
+                "setup_grade"
+            )
+        )
+
+        snapshot["setup_type"] = (
+            self.calculate_win_rate_by_field(
+                "setup_type"
+            )
+        )
+
+        snapshot["trade_quality"] = (
+            self.calculate_win_rate_by_field(
+                "trade_quality"
+            )
+        )
+
+        snapshot["stack_strength"] = (
+            self.calculate_win_rate_by_field(
+                "stack_strength"
+            )
+        )
+
+        snapshot["footprint_score"] = (
+            self.calculate_win_rate_by_field(
+                "footprint_score"
+            )
+        )
+
+        snapshot["confidence_bucket"] = (
+            self.calculate_win_rate_by_confidence_bucket()
+        )
+
+        return snapshot
+
+    def build_ranked_feature_importance(self):
+
+        snapshot = self.build_feature_importance_snapshot()
+
+        ranked_items = []
+
+        for feature_name, values in snapshot.items():
+
+            for value_name, win_rate in values.items():
+                ranked_items.append({
+                    "feature": feature_name,
+                    "value": value_name,
+                    "win_rate": win_rate
+                })
+
+        ranked_items = sorted(
+            ranked_items,
+            key=lambda item: item["win_rate"],
+            reverse=True
+        )
+
+        return ranked_items
