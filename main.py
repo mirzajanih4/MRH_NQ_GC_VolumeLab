@@ -438,3 +438,12 @@ print("\n----- Ranked Feature Importance -----")
 
 for item in analytics_engine.build_ranked_feature_importance():
     print(item)
+    print("\n----- Selected Features -----")
+
+    for item in analytics_engine.get_top_features():
+        print(item)
+        print("\n----- ML Readiness Snapshot -----")
+
+        print(
+            analytics_engine.build_ml_readiness_snapshot()
+        )

@@ -316,3 +316,41 @@ class AnalyticsEngine:
         )
 
         return ranked_items
+
+    def get_top_features(
+            self,
+            minimum_win_rate=50
+    ):
+
+        ranked = (
+            self.build_ranked_feature_importance()
+        )
+
+        selected = []
+
+        for item in ranked:
+
+            if (
+                    item["win_rate"]
+                    >= minimum_win_rate
+            ):
+                selected.append(item)
+
+        return selected
+
+    def build_ml_readiness_snapshot(self):
+
+        selected_features = self.get_top_features()
+
+        snapshot = {
+            "selected_feature_count":
+                len(selected_features),
+
+            "dataset_ready":
+                len(selected_features) >= 5,
+
+            "selected_features":
+                selected_features
+        }
+
+        return snapshot
