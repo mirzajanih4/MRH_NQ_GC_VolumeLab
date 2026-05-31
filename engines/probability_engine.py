@@ -215,3 +215,19 @@ class ProbabilityEngine:
         )
 
         return round(score, 2)
+
+    def get_probability_grade(
+            self,
+            weighted_probability_score
+    ):
+
+        if weighted_probability_score >= 90:
+            return "ELITE_PROBABILITY"
+
+        elif weighted_probability_score >= 75:
+            return "HIGH_PROBABILITY"
+
+        elif weighted_probability_score >= 50:
+            return "MEDIUM_PROBABILITY"
+
+        return "LOW_PROBABILITY"

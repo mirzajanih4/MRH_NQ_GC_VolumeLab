@@ -239,6 +239,11 @@ def run_scenario(scenario):
             dataset_record["footprint_score"]
         )
     )
+    probability_grade = (
+        probability_engine.get_probability_grade(
+            weighted_probability_score
+        )
+    )
     trade_snapshot = {
 
         "setup_grade":
@@ -256,6 +261,8 @@ def run_scenario(scenario):
             probability_score,
         "weighted_probability_score":
             weighted_probability_score,
+        "probability_grade":
+            probability_grade,
         "footprint_score":
             dataset_record["footprint_score"],
 
