@@ -616,6 +616,36 @@ for item in analytics_engine.build_ranked_feature_importance():
         print(
             prepared_training_stats
         )
+        train_test_stats = (
+            ml_training_engine
+            .build_train_test_split_stats()
+        )
+
+        print("\n----- Train Test Split Stats -----")
+
+        print(
+            train_test_stats
+        )
+        label_balance = (
+            ml_training_engine
+            .build_train_test_label_balance()
+        )
+
+        print("\n----- Train Test Label Balance -----")
+
+        print(
+            label_balance
+        )
+        split_quality_report = (
+            ml_training_engine
+            .build_split_quality_report()
+        )
+
+        print("\n----- Split Quality Report -----")
+
+        print(
+            split_quality_report
+        )
 print("\n----- Probability Model Snapshot -----")
 
 probability_model_snapshot = (

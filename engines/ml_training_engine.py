@@ -196,3 +196,115 @@ class MLTrainingEngine:
     def get_training_target_column(self):
 
         return "trade_label"
+
+    def split_train_test_dataset(self, prepared_rows, train_ratio=0.8):
+
+        total_rows = len(prepared_rows)
+
+        split_index = int(
+            total_rows * train_ratio
+        )
+
+        train_rows = prepared_rows[:split_index]
+        test_rows = prepared_rows[split_index:]
+
+        return {
+            "train_rows": train_rows,
+            "test_rows": test_rows,
+            "total_rows": total_rows,
+            "train_count": len(train_rows),
+            "test_count": len(test_rows),
+            "train_ratio": train_ratio
+        }
+
+    def build_train_test_split_stats(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = self.prepare_training_dataset(records)
+
+        split_data = self.split_train_test_dataset(prepared_rows)
+
+        return {
+            "total_prepared_rows": split_data["total_rows"],
+            "train_count": split_data["train_count"],
+            "test_count": split_data["test_count"],
+            "train_ratio": split_data["train_ratio"]
+        }
+
+    def build_train_test_label_balance(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = self.prepare_training_dataset(records)
+
+        split_data = self.split_train_test_dataset(
+            prepared_rows
+        )
+
+        train_rows = split_data["train_rows"]
+        test_rows = split_data["test_rows"]
+
+        train_wins = sum(
+            1 for row in train_rows
+            if row.get("trade_label") == "WIN"
+        )
+
+        train_losses = sum(
+            1 for row in train_rows
+            if row.get("trade_label") == "LOSS"
+        )
+
+        test_wins = sum(
+            1 for row in test_rows
+            if row.get("trade_label") == "WIN"
+        )
+
+        test_losses = sum(
+            1 for row in test_rows
+            if row.get("trade_label") == "LOSS"
+        )
+
+        return {
+            "train_wins": train_wins,
+            "train_losses": train_losses,
+            "test_wins": test_wins,
+            "test_losses": test_losses
+        }
+
+    def build_split_quality_report(self):
+
+        balance = self.build_train_test_label_balance()
+
+        train_total = (
+            balance["train_wins"] +
+            balance["train_losses"]
+        )
+
+        test_total = (
+            balance["test_wins"] +
+            balance["test_losses"]
+        )
+
+        train_has_both_classes = (
+            balance["train_wins"] > 0 and
+            balance["train_losses"] > 0
+        )
+
+        test_has_both_classes = (
+            balance["test_wins"] > 0 and
+            balance["test_losses"] > 0
+        )
+
+        split_valid = (
+            train_has_both_classes and
+            test_has_both_classes
+        )
+
+        return {
+            "train_total": train_total,
+            "test_total": test_total,
+            "train_has_both_classes": train_has_both_classes,
+            "test_has_both_classes": test_has_both_classes,
+            "split_valid": split_valid
+        }
