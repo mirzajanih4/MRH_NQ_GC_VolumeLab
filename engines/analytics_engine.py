@@ -455,3 +455,53 @@ class AnalyticsEngine:
                 distribution["75_100"] += 1
 
         return distribution
+
+    def build_ml_training_readiness_report(self):
+
+        records = self.load_records()
+
+        label_counts = self.count_by_field(
+            "trade_label"
+        )
+
+        total_records = len(records)
+
+        feature_count = 11
+
+        readiness_score = 0
+
+        if total_records >= 10:
+            readiness_score += 25
+
+        if "WIN" in label_counts:
+            readiness_score += 25
+
+        if "LOSS" in label_counts:
+            readiness_score += 25
+
+        if feature_count >= 10:
+            readiness_score += 25
+
+        report = {
+            "total_records": total_records,
+
+            "wins":
+                label_counts.get("WIN", 0),
+
+            "losses":
+                label_counts.get("LOSS", 0),
+
+            "skipped":
+                label_counts.get("SKIPPED", 0),
+
+            "feature_count":
+                feature_count,
+
+            "dataset_ready":
+                readiness_score >= 75,
+
+            "ml_readiness_score":
+                readiness_score
+        }
+
+        return report

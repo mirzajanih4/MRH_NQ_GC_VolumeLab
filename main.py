@@ -564,6 +564,12 @@ for item in analytics_engine.build_ranked_feature_importance():
             analytics_engine
             .build_probability_score_distribution()
         )
+        print("\n----- ML Training Readiness Report -----")
+
+        print(
+            analytics_engine
+            .build_ml_training_readiness_report()
+        )
 print("\n----- Probability Model Snapshot -----")
 
 probability_model_snapshot = (
