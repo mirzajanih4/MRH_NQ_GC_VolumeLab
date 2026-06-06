@@ -23,6 +23,7 @@ from engines.analytics_engine import AnalyticsEngine
 from engines.probability_engine import ProbabilityEngine
 from engines.confidence_engine import ConfidenceEngine
 from engines.footprint_engine import FootprintEngine
+from engines.ml_training_engine import MLTrainingEngine
 volume_engine = VolumeEngine()
 replay_engine = ReplayEngine(volume_engine)
 orderflow_engine = OrderflowEngine(volume_engine)
@@ -569,6 +570,15 @@ for item in analytics_engine.build_ranked_feature_importance():
         print(
             analytics_engine
             .build_ml_training_readiness_report()
+        )
+        ml_training_engine = MLTrainingEngine(
+            "data/ml_trade_snapshots.csv"
+        )
+
+        print("\n----- ML Training Engine Summary -----")
+
+        print(
+            ml_training_engine.build_training_summary()
         )
 print("\n----- Probability Model Snapshot -----")
 
