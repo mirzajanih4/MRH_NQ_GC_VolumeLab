@@ -580,6 +580,36 @@ for item in analytics_engine.build_ranked_feature_importance():
         print(
             ml_training_engine.build_training_summary()
         )
+        print("\n----- Training Statistics -----")
+
+        print(
+            ml_training_engine
+            .build_training_statistics()
+        )
+        print("\n----- Training Label Distribution -----")
+
+        print(
+            ml_training_engine
+            .build_label_distribution()
+        )
+        print("\n----- Tradable Dataset Statistics -----")
+
+        print(
+            ml_training_engine
+            .build_tradable_dataset_stats()
+        )
+        print("\n----- Tradable Win Rate -----")
+
+        print(
+            ml_training_engine
+            .calculate_tradable_win_rate()
+        )
+        print("\n----- Dataset Balance Report -----")
+
+        print(
+            ml_training_engine
+            .build_dataset_balance_report()
+        )
 print("\n----- Probability Model Snapshot -----")
 
 probability_model_snapshot = (
