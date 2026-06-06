@@ -610,6 +610,12 @@ for item in analytics_engine.build_ranked_feature_importance():
             ml_training_engine
             .build_dataset_balance_report()
         )
+        prepared_training_stats = ml_training_engine.build_prepared_training_stats()
+        print("\n----- Prepared Training Stats -----")
+
+        print(
+            prepared_training_stats
+        )
 print("\n----- Probability Model Snapshot -----")
 
 probability_model_snapshot = (
