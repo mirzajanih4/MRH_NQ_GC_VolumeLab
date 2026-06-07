@@ -703,3 +703,100 @@ class MLTrainingEngine:
                 len(text_columns) == 0
             )
         }
+
+    def build_majority_class_baseline(self):
+
+        encoded_targets = (
+            self.build_encoded_target_vector()
+        )
+
+        wins = sum(
+            1 for target in encoded_targets
+            if target == 1
+        )
+
+        losses = sum(
+            1 for target in encoded_targets
+            if target == 0
+        )
+
+        if wins >= losses:
+            majority_class = 1
+            majority_label = "WIN"
+        else:
+            majority_class = 0
+            majority_label = "LOSS"
+
+        return {
+            "wins": wins,
+            "losses": losses,
+            "majority_class": majority_class,
+            "majority_label": majority_label
+        }
+
+    def build_baseline_accuracy_report(self):
+
+        encoded_targets = (
+            self.build_encoded_target_vector()
+        )
+
+        baseline = (
+            self.build_majority_class_baseline()
+        )
+
+        majority_class = baseline["majority_class"]
+
+        correct_predictions = sum(
+            1 for target in encoded_targets
+            if target == majority_class
+        )
+
+        total_predictions = len(
+            encoded_targets
+        )
+
+        accuracy = 0
+
+        if total_predictions > 0:
+
+            accuracy = round(
+                correct_predictions * 100 / total_predictions,
+                2
+            )
+
+        return {
+            "baseline_model": "MAJORITY_CLASS",
+            "predicted_class": majority_class,
+            "predicted_label": baseline["majority_label"],
+            "correct_predictions": correct_predictions,
+            "total_predictions": total_predictions,
+            "accuracy_percent": accuracy
+        }
+
+    def build_baseline_quality_report(self):
+
+        baseline_accuracy = (
+            self.build_baseline_accuracy_report()
+        )
+
+        encoded_dataset_report = (
+            self.build_encoded_dataset_quality_report()
+        )
+
+        return {
+            "baseline_accuracy_percent":
+                baseline_accuracy["accuracy_percent"],
+
+            "dataset_ready":
+                encoded_dataset_report["ml_ready_for_training"],
+
+            "baseline_ready":
+                baseline_accuracy["total_predictions"] > 0,
+
+            "comparison_ready":
+                (
+                    encoded_dataset_report["ml_ready_for_training"]
+                    and
+                    baseline_accuracy["total_predictions"] > 0
+                )
+        }

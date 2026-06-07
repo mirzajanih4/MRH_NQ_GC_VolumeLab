@@ -658,6 +658,36 @@ for item in analytics_engine.build_ranked_feature_importance():
         print(
             final_matrix_quality_report
         )
+        majority_baseline = (
+            ml_training_engine
+            .build_majority_class_baseline()
+        )
+
+        print("\n----- Majority Class Baseline -----")
+
+        print(
+            majority_baseline
+        )
+        baseline_accuracy_report = (
+            ml_training_engine
+            .build_baseline_accuracy_report()
+        )
+
+        print("\n----- Baseline Accuracy Report -----")
+
+        print(
+            baseline_accuracy_report
+        )
+        baseline_quality_report = (
+            ml_training_engine
+            .build_baseline_quality_report()
+        )
+
+        print("\n----- Baseline Quality Report -----")
+
+        print(
+            baseline_quality_report
+        )
 
         encoding_quality_report = (
             ml_training_engine
