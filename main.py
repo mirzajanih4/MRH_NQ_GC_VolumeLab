@@ -661,6 +661,27 @@ for item in analytics_engine.build_ranked_feature_importance():
 
         print("\n----- Target Vector Sample (first 10 labels) -----")
         print(target_vector[:10])
+        encoded_target_vector = (
+            ml_training_engine
+            .build_encoded_target_vector()
+        )
+
+        print("\n----- Encoded Target Vector Sample (first 10 labels) -----")
+
+        print(
+            encoded_target_vector[:10]
+        )
+        encoded_dataset_quality_report = (
+            ml_training_engine
+            .build_encoded_dataset_quality_report()
+        )
+
+        print("\n----- Encoded Dataset Quality Report -----")
+
+        print(
+            encoded_dataset_quality_report
+        )
+
         shape_report = (
             ml_training_engine
             .build_feature_target_shape_report()

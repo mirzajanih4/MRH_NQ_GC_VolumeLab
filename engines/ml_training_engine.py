@@ -548,3 +548,67 @@ class MLTrainingEngine:
                 text_columns == ["setup_type"]
             )
         }
+
+    def get_target_encoding_map(self):
+
+        return {
+            "WIN": 1,
+            "LOSS": 0
+        }
+
+    def build_encoded_target_vector(self):
+
+        target_vector = (
+            self.build_target_vector()
+        )
+
+        target_encoding_map = (
+            self.get_target_encoding_map()
+        )
+
+        encoded_target_vector = []
+
+        for target in target_vector:
+
+            encoded_target_vector.append(
+                target_encoding_map.get(target, -1)
+            )
+
+        return encoded_target_vector
+
+    def build_encoded_dataset_quality_report(self):
+
+        encoded_feature_matrix = (
+            self.build_encoded_feature_matrix()
+        )
+
+        encoded_target_vector = (
+            self.build_encoded_target_vector()
+        )
+
+        encoding_report = (
+            self.build_encoding_quality_report()
+        )
+
+        invalid_targets = sum(
+            1 for target in encoded_target_vector
+            if target == -1
+        )
+
+        return {
+            "feature_rows": len(encoded_feature_matrix),
+            "target_rows": len(encoded_target_vector),
+            "shape_valid": (
+                len(encoded_feature_matrix) ==
+                len(encoded_target_vector)
+            ),
+            "text_columns_remaining": encoding_report["text_columns_remaining"],
+            "invalid_targets": invalid_targets,
+            "ml_ready_for_training": (
+                len(encoded_feature_matrix) ==
+                len(encoded_target_vector) and
+                invalid_targets == 0 and
+                encoding_report["encoding_valid"] is True
+            )
+        }
+
