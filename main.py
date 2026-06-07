@@ -621,6 +621,56 @@ for item in analytics_engine.build_ranked_feature_importance():
             .build_train_test_split_stats()
         )
 
+        feature_matrix = ml_training_engine.build_feature_matrix()
+        target_vector = ml_training_engine.build_target_vector()
+
+        print("\n----- Feature Matrix Sample (first 3 rows) -----")
+        for row in feature_matrix[:3]:
+            print(row)
+
+        encoded_feature_matrix = (
+            ml_training_engine
+            .build_encoded_feature_matrix()
+        )
+
+        print("\n----- Encoded Feature Matrix Sample (first 3 rows) -----")
+
+        for row in encoded_feature_matrix[:3]:
+            print(row)
+
+        encoding_quality_report = (
+            ml_training_engine
+            .build_encoding_quality_report()
+        )
+
+        print("\n----- Encoding Quality Report -----")
+
+        print(
+            encoding_quality_report
+        )
+
+        numeric_feature_matrix = (
+            ml_training_engine
+            .build_numeric_feature_matrix()
+        )
+
+        print("\n----- Numeric Feature Matrix Sample (first 3 rows) -----")
+
+        for row in numeric_feature_matrix[:3]:
+            print(row)
+
+        print("\n----- Target Vector Sample (first 10 labels) -----")
+        print(target_vector[:10])
+        shape_report = (
+            ml_training_engine
+            .build_feature_target_shape_report()
+        )
+
+        print("\n----- Feature Target Shape Report -----")
+
+        print(
+            shape_report
+        )
         print("\n----- Train Test Split Stats -----")
 
         print(
@@ -646,6 +696,7 @@ for item in analytics_engine.build_ranked_feature_importance():
         print(
             split_quality_report
         )
+
 print("\n----- Probability Model Snapshot -----")
 
 probability_model_snapshot = (

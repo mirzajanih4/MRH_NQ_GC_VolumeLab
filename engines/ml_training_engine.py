@@ -308,3 +308,243 @@ class MLTrainingEngine:
             "test_has_both_classes": test_has_both_classes,
             "split_valid": split_valid
         }
+
+    def build_feature_matrix(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        feature_columns = (
+            self.get_training_feature_columns()
+        )
+
+        feature_matrix = []
+
+        for row in prepared_rows:
+
+            feature_row = {}
+
+            for column in feature_columns:
+
+                feature_row[column] = row.get(column)
+
+            feature_matrix.append(
+                feature_row
+            )
+
+        return feature_matrix
+
+    def build_target_vector(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        target_column = (
+            self.get_training_target_column()
+        )
+
+        target_vector = []
+
+        for row in prepared_rows:
+
+            target_vector.append(
+                row.get(target_column)
+            )
+
+        return target_vector
+
+    def build_feature_target_shape_report(self):
+
+        feature_matrix = (
+            self.build_feature_matrix()
+        )
+
+        target_vector = (
+            self.build_target_vector()
+        )
+
+        feature_count = 0
+
+        if len(feature_matrix) > 0:
+            feature_count = len(
+                feature_matrix[0]
+            )
+
+        return {
+            "samples": len(feature_matrix),
+            "targets": len(target_vector),
+            "feature_count": feature_count,
+            "shape_valid": (
+                len(feature_matrix) ==
+                len(target_vector)
+            )
+        }
+
+    def get_numeric_feature_columns(self):
+
+        return [
+            "confidence_score",
+            "probability_score",
+            "weighted_probability_score",
+            "footprint_score"
+        ]
+
+    def convert_numeric_features(self, feature_row):
+
+        converted_row = dict(
+            feature_row
+        )
+
+        numeric_columns = (
+            self.get_numeric_feature_columns()
+        )
+
+        for column in numeric_columns:
+
+            value = converted_row.get(column)
+
+            try:
+
+                converted_row[column] = float(
+                    value
+                )
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                converted_row[column] = 0.0
+
+        return converted_row
+
+    def build_numeric_feature_matrix(self):
+
+        feature_matrix = (
+            self.build_feature_matrix()
+        )
+
+        numeric_feature_matrix = []
+
+        for row in feature_matrix:
+
+            converted_row = (
+                self.convert_numeric_features(row)
+            )
+
+            numeric_feature_matrix.append(
+                converted_row
+            )
+
+        return numeric_feature_matrix
+
+    def get_categorical_feature_columns(self):
+
+        return [
+            "setup_grade",
+            "setup_type",
+            "trade_quality",
+            "probability_grade",
+            "stack_strength"
+        ]
+
+    def get_category_encoding_map(self):
+
+        return {
+            "setup_grade": {
+                "A_SETUP": 3,
+                "B_SETUP": 2,
+                "C_SETUP": 1
+            },
+
+            "trade_quality": {
+                "ELITE_QUALITY": 4,
+                "HIGH_QUALITY": 3,
+                "MEDIUM_QUALITY": 2,
+                "LOW_QUALITY": 1
+            },
+
+            "probability_grade": {
+                "HIGH_PROBABILITY": 3,
+                "MEDIUM_PROBABILITY": 2,
+                "LOW_PROBABILITY": 1
+            },
+
+            "stack_strength": {
+                "HIGH": 3,
+                "MEDIUM": 2,
+                "LOW": 1,
+                "NONE": 0
+            }
+        }
+
+    def encode_categorical_features(self, feature_row):
+
+        encoded_row = dict(
+            feature_row
+        )
+
+        encoding_map = (
+            self.get_category_encoding_map()
+        )
+
+        for column, mapping in encoding_map.items():
+
+            value = encoded_row.get(column)
+
+            encoded_row[column] = (
+                mapping.get(value, 0)
+            )
+
+        return encoded_row
+
+    def build_encoded_feature_matrix(self):
+
+        numeric_feature_matrix = (
+            self.build_numeric_feature_matrix()
+        )
+
+        encoded_feature_matrix = []
+
+        for row in numeric_feature_matrix:
+
+            encoded_row = (
+                self.encode_categorical_features(row)
+            )
+
+            encoded_feature_matrix.append(
+                encoded_row
+            )
+
+        return encoded_feature_matrix
+
+    def build_encoding_quality_report(self):
+
+        encoded_feature_matrix = (
+            self.build_encoded_feature_matrix()
+        )
+
+        text_columns = []
+
+        if len(encoded_feature_matrix) > 0:
+
+            sample_row = encoded_feature_matrix[0]
+
+            for column, value in sample_row.items():
+
+                if isinstance(value, str):
+                    text_columns.append(column)
+
+        return {
+            "total_rows": len(encoded_feature_matrix),
+            "text_columns_remaining": text_columns,
+            "encoding_valid": (
+                text_columns == ["setup_type"]
+            )
+        }
