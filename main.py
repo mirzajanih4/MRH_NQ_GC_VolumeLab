@@ -638,6 +638,27 @@ for item in analytics_engine.build_ranked_feature_importance():
         for row in encoded_feature_matrix[:3]:
             print(row)
 
+        final_encoded_feature_matrix = (
+            ml_training_engine
+            .build_final_encoded_feature_matrix()
+        )
+
+        print("\n----- Final Encoded Feature Matrix Sample (first 3 rows) -----")
+
+        for row in final_encoded_feature_matrix[:3]:
+            print(row)
+
+        final_matrix_quality_report = (
+            ml_training_engine
+            .build_final_feature_matrix_quality_report()
+        )
+
+        print("\n----- Final Feature Matrix Quality Report -----")
+
+        print(
+            final_matrix_quality_report
+        )
+
         encoding_quality_report = (
             ml_training_engine
             .build_encoding_quality_report()

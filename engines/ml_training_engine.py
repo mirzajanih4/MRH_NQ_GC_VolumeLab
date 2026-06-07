@@ -612,3 +612,94 @@ class MLTrainingEngine:
             )
         }
 
+    def get_setup_type_categories(self):
+
+        return [
+            "BREAKOUT_SETUP",
+            "BREAKDOWN_SETUP",
+            "ABSORPTION_SETUP",
+            "BALANCED_MARKET"
+        ]
+
+    def encode_setup_type(self, feature_row):
+
+        encoded_row = dict(
+            feature_row
+        )
+
+        setup_type = encoded_row.get(
+            "setup_type"
+        )
+
+        categories = (
+            self.get_setup_type_categories()
+        )
+
+        del encoded_row["setup_type"]
+
+        for category in categories:
+
+            column_name = (
+                "setup_type_" + category
+            )
+
+            encoded_row[column_name] = int(
+                setup_type == category
+            )
+
+        return encoded_row
+
+    def build_final_encoded_feature_matrix(self):
+
+        encoded_feature_matrix = (
+            self.build_encoded_feature_matrix()
+        )
+
+        final_feature_matrix = []
+
+        for row in encoded_feature_matrix:
+
+            final_row = (
+                self.encode_setup_type(row)
+            )
+
+            final_feature_matrix.append(
+                final_row
+            )
+
+        return final_feature_matrix
+
+    def build_final_feature_matrix_quality_report(self):
+
+        final_feature_matrix = (
+            self.build_final_encoded_feature_matrix()
+        )
+
+        text_columns = []
+
+        feature_count = 0
+
+        if len(final_feature_matrix) > 0:
+
+            sample_row = final_feature_matrix[0]
+
+            feature_count = len(
+                sample_row
+            )
+
+            for column, value in sample_row.items():
+
+                if isinstance(value, str):
+
+                    text_columns.append(
+                        column
+                    )
+
+        return {
+            "rows": len(final_feature_matrix),
+            "feature_count": feature_count,
+            "text_columns_remaining": text_columns,
+            "fully_numeric": (
+                len(text_columns) == 0
+            )
+        }
