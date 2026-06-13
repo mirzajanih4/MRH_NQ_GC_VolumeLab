@@ -800,3 +800,281 @@ class MLTrainingEngine:
                     baseline_accuracy["total_predictions"] > 0
                 )
         }
+
+    def predict_with_rule_based_model(self, feature_row):
+
+        score = 0
+
+        if feature_row.get("setup_grade", 0) >= 3:
+            score += 2
+
+        if feature_row.get("confidence_score", 0) >= 80:
+            score += 2
+
+        if feature_row.get("trade_quality", 0) >= 3:
+            score += 2
+
+        if feature_row.get("probability_score", 0) >= 50:
+            score += 1
+
+        if feature_row.get("weighted_probability_score", 0) >= 50:
+            score += 1
+
+        if feature_row.get("probability_grade", 0) >= 2:
+            score += 1
+
+        if feature_row.get("footprint_score", 0) >= 1.0:
+            score += 1
+
+        if feature_row.get("stack_strength", 0) >= 2:
+            score += 1
+
+        if score >= 6:
+            return 1
+
+        return 0
+
+    def build_rule_based_predictions(self):
+
+        final_feature_matrix = (
+            self.build_final_encoded_feature_matrix()
+        )
+
+        predictions = []
+
+        for feature_row in final_feature_matrix:
+
+            prediction = (
+                self.predict_with_rule_based_model(feature_row)
+            )
+
+            predictions.append(
+                prediction
+            )
+
+        return predictions
+
+    def build_rule_based_accuracy_report(self):
+
+        predictions = (
+            self.build_rule_based_predictions()
+        )
+
+        actual_targets = (
+            self.build_encoded_target_vector()
+        )
+
+        correct_predictions = 0
+
+        for prediction, actual in zip(
+                predictions,
+                actual_targets
+        ):
+
+            if prediction == actual:
+
+                correct_predictions += 1
+
+        total_predictions = len(
+            actual_targets
+        )
+
+        accuracy = 0
+
+        if total_predictions > 0:
+
+            accuracy = round(
+                correct_predictions * 100 /
+                total_predictions,
+                2
+            )
+
+        baseline_accuracy = (
+            self.build_baseline_accuracy_report()
+        )
+
+        return {
+            "model": "RULE_BASED",
+            "correct_predictions": correct_predictions,
+            "total_predictions": total_predictions,
+            "accuracy_percent": accuracy,
+            "baseline_accuracy":
+                baseline_accuracy["accuracy_percent"],
+            "beats_baseline":
+                accuracy >
+                baseline_accuracy["accuracy_percent"]
+        }
+
+    def build_leakage_risk_report(self):
+
+        rule_based_report = (
+            self.build_rule_based_accuracy_report()
+        )
+
+        accuracy = (
+            rule_based_report["accuracy_percent"]
+        )
+
+        leakage_risk = (
+            accuracy >= 90
+        )
+
+        return {
+            "rule_based_accuracy": accuracy,
+            "leakage_risk": leakage_risk,
+            "requires_review": leakage_risk,
+            "risk_reason":
+                "Accuracy unusually high"
+                if leakage_risk
+                else
+                "No obvious leakage risk"
+        }
+
+    def get_safe_rule_based_features(self):
+
+        return [
+            "setup_grade",
+            "confidence_score",
+            "footprint_score",
+            "stack_strength"
+        ]
+
+    def predict_with_safe_rule_based_model(self, feature_row):
+
+        score = 0
+
+        if feature_row.get("setup_grade", 0) >= 3:
+            score += 2
+
+        if feature_row.get("confidence_score", 0) >= 80:
+            score += 2
+
+        if feature_row.get("footprint_score", 0) >= 1.0:
+            score += 1
+
+        if feature_row.get("stack_strength", 0) >= 2:
+            score += 1
+
+        if score >= 4:
+            return 1
+
+        return 0
+
+    def build_safe_rule_based_predictions(self):
+
+        final_feature_matrix = (
+            self.build_final_encoded_feature_matrix()
+        )
+
+        predictions = []
+
+        for feature_row in final_feature_matrix:
+
+            prediction = (
+                self.predict_with_safe_rule_based_model(feature_row)
+            )
+
+            predictions.append(
+                prediction
+            )
+
+        return predictions
+
+    def build_safe_rule_based_accuracy_report(self):
+
+        predictions = (
+            self.build_safe_rule_based_predictions()
+        )
+
+        actual_targets = (
+            self.build_encoded_target_vector()
+        )
+
+        correct_predictions = 0
+
+        for prediction, actual in zip(
+                predictions,
+                actual_targets
+        ):
+
+            if prediction == actual:
+
+                correct_predictions += 1
+
+        total_predictions = len(
+            actual_targets
+        )
+
+        accuracy = 0
+
+        if total_predictions > 0:
+
+            accuracy = round(
+                correct_predictions * 100 /
+                total_predictions,
+                2
+            )
+
+        baseline_accuracy = (
+            self.build_baseline_accuracy_report()
+        )
+
+        return {
+            "model": "SAFE_RULE_BASED",
+            "correct_predictions": correct_predictions,
+            "total_predictions": total_predictions,
+            "accuracy_percent": accuracy,
+            "baseline_accuracy":
+                baseline_accuracy["accuracy_percent"],
+            "beats_baseline":
+                accuracy >
+                baseline_accuracy["accuracy_percent"]
+        }
+
+    def build_feature_target_audit(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        audit = {}
+
+        feature_columns = (
+            self.get_training_feature_columns()
+        )
+
+        for feature in feature_columns:
+
+            audit[feature] = {
+                "WIN": {},
+                "LOSS": {}
+            }
+
+        for row in prepared_rows:
+
+            label = row.get(
+                "trade_label"
+            )
+
+            if label not in (
+                    "WIN",
+                    "LOSS"
+            ):
+                continue
+
+            for feature in feature_columns:
+
+                value = row.get(feature)
+
+                current = (
+                    audit[feature][label]
+                    .get(value, 0)
+                )
+
+                audit[feature][label][value] = (
+                    current + 1
+                )
+
+        return audit

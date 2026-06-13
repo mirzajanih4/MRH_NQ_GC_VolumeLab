@@ -688,6 +688,57 @@ for item in analytics_engine.build_ranked_feature_importance():
         print(
             baseline_quality_report
         )
+        rule_based_predictions = (
+            ml_training_engine
+            .build_rule_based_predictions()
+        )
+
+        print("\n----- Rule-Based Predictions Sample (first 20) -----")
+
+        print(
+            rule_based_predictions[:20]
+        )
+        rule_based_accuracy_report = (
+            ml_training_engine
+            .build_rule_based_accuracy_report()
+        )
+
+        print("\n----- Rule-Based Accuracy Report -----")
+
+        print(
+            rule_based_accuracy_report
+        )
+        leakage_risk_report = (
+            ml_training_engine
+            .build_leakage_risk_report()
+        )
+
+        print("\n----- Leakage Risk Report -----")
+
+        print(
+            leakage_risk_report
+        )
+        safe_rule_based_accuracy_report = (
+            ml_training_engine
+            .build_safe_rule_based_accuracy_report()
+        )
+
+        print("\n----- Safe Rule-Based Accuracy Report -----")
+
+        print(
+            safe_rule_based_accuracy_report
+        )
+
+        feature_target_audit = (
+            ml_training_engine
+            .build_feature_target_audit()
+        )
+
+        print("\n----- Feature Target Audit -----")
+
+        for feature, result in feature_target_audit.items():
+            print(feature)
+            print(result)
 
         encoding_quality_report = (
             ml_training_engine
