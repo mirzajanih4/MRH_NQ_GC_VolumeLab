@@ -41,6 +41,7 @@ nq_strategy = NQStrategy(
 # scenario = "CSV"
 scenario = "CSV"
 scenario_list = [
+    # Original scenarios
     "BUY",
     "SELL",
     "NO_TRADE",
@@ -48,9 +49,21 @@ scenario_list = [
     "SELL_LVN",
     "ABSORPTION",
     "SWEEP_ABSORPTION",
-    "CSV"
+    "CSV",
 
+    # STEP 101.3 Counter scenarios
+    "BUY_FAILED",
+    "SELL_FAILED",
+    "BUY_WEAK_WIN",
+    "SELL_WEAK_WIN",
+    "BREAKOUT_LOSS",
+    "BREAKDOWN_WIN",
+    "BUY_B_WIN",
+    "SELL_B_WIN",
+    "BUY_A_LOSS",
+    "SELL_A_LOSS",
 ]
+
 def get_ticks_by_scenario(scenario):
 
     if scenario == "BUY":
@@ -75,8 +88,39 @@ def get_ticks_by_scenario(scenario):
     elif scenario == "CSV":
         return load_ticks_from_csv("data/sample_ticks.csv")
 
+    elif scenario == "BUY_FAILED":
+        return get_sample_ticks()
+
+    elif scenario == "SELL_FAILED":
+        return get_sample_sell_ticks()
+
+    elif scenario == "BUY_WEAK_WIN":
+        return get_sample_buy_lvn_ticks()
+
+    elif scenario == "SELL_WEAK_WIN":
+        return get_sample_sell_lvn_ticks()
+
+    elif scenario == "BREAKOUT_LOSS":
+        return get_sample_ticks()
+
+    elif scenario == "BREAKDOWN_WIN":
+        return get_sample_sell_lvn_ticks()
+
+    elif scenario == "BUY_B_WIN":
+        return get_sample_buy_lvn_ticks()
+
+    elif scenario == "SELL_B_WIN":
+        return get_sample_sell_lvn_ticks()
+
+    elif scenario == "BUY_A_LOSS":
+
+        return get_sample_ticks()
+
+    elif scenario == "SELL_A_LOSS":
+        return get_sample_sell_ticks()
     else:
         return []
+
 
 
 # ticks = get_ticks_by_scenario(scenario)
@@ -145,19 +189,91 @@ def run_scenario(scenario):
         nq_strategy.classify_setup()
     )
     final_signal = nq_strategy.get_final_signal(risk_engine)
+    setup_type = nq_strategy.classify_setup()
     setup_grade = nq_strategy.grade_setup()
 
-    if final_signal == "NO_TRADE":
+    # STEP 101.3E - Counter scenario setup override
+    if scenario in (
+            "BUY_FAILED",
+            "BREAKOUT_LOSS",
+            "SELL_FAILED",
+            "BUY_A_LOSS",
+            "SELL_A_LOSS"
+    ):
+
+        setup_type = "BREAKOUT_SETUP"
+        setup_grade = "A_SETUP"
+
+    elif scenario == "SELL_FAILED":
+        setup_type = "BREAKDOWN_SETUP"
+        setup_grade = "A_SETUP"
+
+    elif scenario == "BUY_WEAK_WIN":
+        setup_type = "BREAKOUT_SETUP"
+        setup_grade = "B_SETUP"
+
+    elif scenario in (
+            "SELL_WEAK_WIN",
+            "BREAKDOWN_WIN"
+    ):
+        setup_type = "BREAKDOWN_SETUP"
+        setup_grade = "B_SETUP"
+
+    elif scenario == "BUY_B_WIN":
+        setup_type = "BREAKOUT_SETUP"
+        setup_grade = "B_SETUP"
+
+    elif scenario == "SELL_B_WIN":
+        setup_type = "BREAKDOWN_SETUP"
+        setup_grade = "B_SETUP"
+
+    elif scenario == "BUY_A_LOSS":
+        setup_type = "BREAKOUT_SETUP"
+        setup_grade = "A_SETUP"
+
+    elif scenario == "SELL_A_LOSS":
+        setup_type = "BREAKDOWN_SETUP"
+        setup_grade = "A_SETUP"
+
+    if scenario in (
+            "BUY_FAILED",
+            "BREAKOUT_LOSS",
+            "SELL_FAILED"
+    ):
+        trade_outcome = "LOSS"
+
+    elif scenario in (
+            "SELL_WEAK_WIN",
+            "BUY_WEAK_WIN",
+            "BREAKDOWN_WIN",
+            "BUY_B_WIN",
+            "SELL_B_WIN"
+        ):
+
+        trade_outcome = "WIN"
+
+    elif final_signal == "NO_TRADE":
         trade_outcome = "SKIPPED"
 
-    elif (
-        final_signal == "BUY_ALLOWED"
-        and setup_grade == "A_SETUP"
+    elif scenario in (
+            "BUY",
+            "ABSORPTION"
     ):
+        trade_outcome = "WIN"
+
+    elif scenario in (
+            "BUY_LVN",
+            "SELL",
+            "SWEEP_ABSORPTION"
+    ):
+        trade_outcome = "LOSS"
+
+    elif scenario == "SELL_LVN":
         trade_outcome = "WIN"
 
     else:
         trade_outcome = "LOSS"
+
     if trade_outcome == "WIN":
         trade_label = "WIN"
 
@@ -168,7 +284,7 @@ def run_scenario(scenario):
         trade_label = "SKIPPED"
     confidence_score = confidence_engine.calculate_confidence(
         orderflow_engine.calculate_score(),
-        nq_strategy.grade_setup(),
+        setup_grade,
         context_engine.detect_volume_node(),
         session_engine.detect_session(),
         footprint_data["footprint_score"],
@@ -192,8 +308,8 @@ def run_scenario(scenario):
         "final_signal": nq_strategy.get_final_signal(risk_engine),
         "trade_outcome": trade_outcome,
         "trade_label": trade_label,
-        "setup_type": nq_strategy.classify_setup(),
-        "setup_grade": nq_strategy.grade_setup(),
+        "setup_type": setup_type,
+        "setup_grade": setup_grade,
         "confidence_score": confidence_score,
         "trade_quality": trade_quality,
 
@@ -240,6 +356,7 @@ def run_scenario(scenario):
             dataset_record["stack_strength"],
             dataset_record["footprint_score"]
         )
+
     )
     probability_grade = (
         probability_engine.get_probability_grade(

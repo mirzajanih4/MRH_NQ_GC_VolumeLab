@@ -82,16 +82,15 @@ class NQStrategy:
         if (
             sweep_signal == "SWEEP_BUY"
             and volume_node == "NEAR_LVN"
-            and market_phase == "TREND_UP"
         ):
             return "BREAKOUT_SETUP"
 
         if (
             sweep_signal == "SWEEP_SELL"
             and volume_node == "NEAR_LVN"
-            and market_phase == "TREND_DOWN"
         ):
             return "BREAKDOWN_SETUP"
+
 
         if absorption_signal != "NO_ABSORPTION":
             return "ABSORPTION_SETUP"
@@ -107,16 +106,26 @@ class NQStrategy:
         volume_node = self.context_engine.detect_volume_node()
 
         if (
-            score >= 1.0
-            and setup_type == "BREAKOUT_SETUP"
-            and volume_node == "NEAR_LVN"
+                score >= 1.0
+                and setup_type in (
+                "BREAKOUT_SETUP",
+                "BREAKDOWN_SETUP"
+        )
+                and volume_node == "NEAR_LVN"
         ):
             return "A_SETUP"
+
+        if (
+                score >= 0.75
+                and setup_type == "ABSORPTION_SETUP"
+        ):
+            return "B_SETUP"
 
         if score >= 0.5:
             return "B_SETUP"
 
         return "C_SETUP"
+
     def get_final_signal(self, risk_engine):
         decision = self.evaluate()
         score = self.orderflow_engine.calculate_score()
