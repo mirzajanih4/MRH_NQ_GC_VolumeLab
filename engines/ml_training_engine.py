@@ -1078,3 +1078,169 @@ class MLTrainingEngine:
                 )
 
         return audit
+
+    def build_feature_leakage_ranking(self):
+
+        audit = self.build_feature_target_audit()
+
+        ranking = []
+
+        for feature, values in audit.items():
+
+            win_total = sum(
+                values["WIN"].values()
+            )
+
+            loss_total = sum(
+                values["LOSS"].values()
+            )
+
+            strongest_gap = 0
+
+            all_values = set(
+                list(values["WIN"].keys()) +
+                list(values["LOSS"].keys())
+            )
+
+            for value in all_values:
+
+                win_count = (
+                    values["WIN"].get(value, 0)
+                )
+
+                loss_count = (
+                    values["LOSS"].get(value, 0)
+                )
+
+                gap = abs(
+                    win_count - loss_count
+                )
+
+                if gap > strongest_gap:
+                    strongest_gap = gap
+
+            ranking.append({
+                "feature": feature,
+                "gap_score": strongest_gap,
+                "win_total": win_total,
+                "loss_total": loss_total
+            })
+
+        ranking.sort(
+            key=lambda x: x["gap_score"],
+            reverse=True
+        )
+
+        return ranking
+
+    def build_normalized_leakage_ranking(self):
+
+        audit = self.build_feature_target_audit()
+
+        ranking = []
+
+        for feature, values in audit.items():
+
+            max_bias = 0
+
+            all_values = set(
+                list(values["WIN"].keys()) +
+                list(values["LOSS"].keys())
+            )
+
+            for value in all_values:
+
+                win_count = values["WIN"].get(value, 0)
+                loss_count = values["LOSS"].get(value, 0)
+
+                total = win_count + loss_count
+
+                if total == 0:
+                    continue
+
+                bias = abs(
+                    win_count - loss_count
+                ) / total
+
+                if bias > max_bias:
+                    max_bias = bias
+
+            ranking.append({
+                "feature": feature,
+                "normalized_bias": round(max_bias, 3)
+            })
+
+        ranking.sort(
+            key=lambda x: x["normalized_bias"],
+            reverse=True
+        )
+
+        return ranking
+
+    def bucket_numeric_value(self, value, bucket_size=10):
+
+        try:
+            numeric_value = float(value)
+
+        except (
+            TypeError,
+            ValueError
+        ):
+            return "UNKNOWN"
+
+        bucket_start = int(
+            numeric_value // bucket_size
+        ) * bucket_size
+
+        bucket_end = bucket_start + bucket_size
+
+        return f"{bucket_start}-{bucket_end}"
+
+    def build_bucketed_numeric_leakage_audit(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        numeric_features = [
+            "confidence_score",
+            "probability_score",
+            "weighted_probability_score",
+            "footprint_score"
+        ]
+
+        audit = {}
+
+        for feature in numeric_features:
+
+            audit[feature] = {
+                "WIN": {},
+                "LOSS": {}
+            }
+
+        for row in prepared_rows:
+
+            label = row.get("trade_label")
+
+            if label not in ("WIN", "LOSS"):
+                continue
+
+            for feature in numeric_features:
+
+                bucket = self.bucket_numeric_value(
+                    row.get(feature)
+                )
+
+                current = (
+                    audit[feature][label]
+                    .get(bucket, 0)
+                )
+
+                audit[feature][label][bucket] = (
+                    current + 1
+                )
+
+        return audit
+

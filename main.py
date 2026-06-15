@@ -290,17 +290,18 @@ def run_scenario(scenario):
         footprint_data["footprint_score"],
         footprint_data["stack_strength"]
     )
-    if confidence_score < 40:
-        trade_quality = "LOW_QUALITY"
-
-    elif confidence_score < 70:
-        trade_quality = "MEDIUM_QUALITY"
-
-    elif confidence_score < 90:
+    # STEP 102.2 - Trade quality decorrelation
+    if setup_grade == "A_SETUP" and footprint_data["footprint_score"] >= 1.0:
         trade_quality = "HIGH_QUALITY"
 
+    elif setup_grade == "B_SETUP" and footprint_data["footprint_score"] >= 1.0:
+        trade_quality = "MEDIUM_QUALITY"
+
+    elif setup_grade == "A_SETUP":
+        trade_quality = "MEDIUM_QUALITY"
+
     else:
-        trade_quality = "ELITE_QUALITY"
+        trade_quality = "LOW_QUALITY"
 
 
     dataset_record = {
@@ -862,6 +863,26 @@ for item in analytics_engine.build_ranked_feature_importance():
             .build_encoding_quality_report()
         )
 
+        print("\n----- Feature Leakage Ranking -----")
+
+        for item in ml_training_engine.build_feature_leakage_ranking():
+            print(item)
+        print("\n----- Normalized Leakage Ranking -----")
+
+        for item in ml_training_engine.build_normalized_leakage_ranking():
+            print(item)
+
+        print("\n----- Bucketed Numeric Leakage Audit -----")
+
+        bucketed_audit = (
+            ml_training_engine
+            .build_bucketed_numeric_leakage_audit()
+        )
+
+        for feature, result in bucketed_audit.items():
+            print(feature)
+            print(result)
+
         print("\n----- Encoding Quality Report -----")
 
         print(
@@ -872,6 +893,9 @@ for item in analytics_engine.build_ranked_feature_importance():
             ml_training_engine
             .build_numeric_feature_matrix()
         )
+
+
+
 
         print("\n----- Numeric Feature Matrix Sample (first 3 rows) -----")
 
@@ -936,6 +960,7 @@ for item in analytics_engine.build_ranked_feature_importance():
         print(
             split_quality_report
         )
+
 
 print("\n----- Probability Model Snapshot -----")
 

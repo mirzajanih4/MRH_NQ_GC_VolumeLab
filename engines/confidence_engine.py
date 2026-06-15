@@ -15,10 +15,10 @@ class ConfidenceEngine:
         confidence += orderflow_score * 50
 
         if setup_grade == "A_SETUP":
-            confidence += 30
+            confidence += 20
 
         elif setup_grade == "B_SETUP":
-            confidence += 15
+            confidence += 10
 
         if volume_node == "NEAR_LVN":
             confidence += 10
