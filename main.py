@@ -883,6 +883,77 @@ for item in analytics_engine.build_ranked_feature_importance():
             print(feature)
             print(result)
 
+        print("\n----- Feature Dependency Audit -----")
+
+        dependency_audit = (
+            ml_training_engine
+            .build_feature_dependency_audit()
+        )
+
+        for feature_pair, result in dependency_audit.items():
+            print(feature_pair)
+            print(result)
+
+        print("\n----- Core Feature Audit -----")
+
+        core_audit = (
+            ml_training_engine
+            .build_core_feature_audit()
+        )
+
+        for feature, result in core_audit.items():
+            print(feature)
+            print(result)
+
+        print("\n----- Dead Feature Audit -----")
+
+        dead_audit = (
+            ml_training_engine
+            .build_dead_feature_audit()
+        )
+
+        for feature, result in dead_audit.items():
+
+            if result["unique_count"] <= 3:
+                print(feature)
+                print(result)
+
+        print("\n----- Core Feature Matrix Report -----")
+
+        print(
+            ml_training_engine
+            .build_core_feature_matrix_report()
+        )
+
+        print("\n----- Encoded Core Feature Matrix Report -----")
+
+        print(
+            ml_training_engine
+            .build_encoded_core_feature_matrix_report()
+        )
+
+
+        print("\n----- Core Training Shape Report -----")
+
+        print(
+            ml_training_engine
+            .build_core_training_shape_report()
+        )
+
+        print("\n----- Core Rule-Based Accuracy Report -----")
+
+        print(
+            ml_training_engine
+            .build_core_rule_based_accuracy_report()
+        )
+
+        print("\n----- Core Training Summary Report -----")
+
+        print(
+            ml_training_engine
+            .build_core_training_summary_report()
+        )
+
         print("\n----- Encoding Quality Report -----")
 
         print(

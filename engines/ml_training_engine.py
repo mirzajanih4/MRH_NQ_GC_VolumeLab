@@ -1244,3 +1244,398 @@ class MLTrainingEngine:
 
         return audit
 
+    def build_feature_dependency_audit(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        dependencies = {}
+
+        feature_pairs = [
+            ("confidence_score", "trade_quality"),
+            ("trade_quality", "probability_grade"),
+            ("probability_score", "probability_grade"),
+            ("weighted_probability_score", "probability_grade"),
+            ("setup_grade", "trade_quality")
+        ]
+
+        for left_feature, right_feature in feature_pairs:
+
+            pair_key = (
+                f"{left_feature} -> {right_feature}"
+            )
+
+            dependencies[pair_key] = {}
+
+            for row in prepared_rows:
+
+                left_value = row.get(left_feature)
+                right_value = row.get(right_feature)
+
+                key = (
+                    str(left_value),
+                    str(right_value)
+                )
+
+                dependencies[pair_key][key] = (
+                    dependencies[pair_key]
+                    .get(key, 0) + 1
+                )
+
+        return dependencies
+
+    def build_core_feature_audit(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        audit = {}
+
+        core_features = [
+            "setup_type",
+            "setup_grade",
+            "confidence_score",
+            "footprint_score",
+            "stack_strength"
+        ]
+
+        for feature in core_features:
+
+            audit[feature] = {
+                "WIN": {},
+                "LOSS": {}
+            }
+
+        for row in prepared_rows:
+
+            label = row.get("trade_label")
+
+            if label not in (
+                    "WIN",
+                    "LOSS"
+            ):
+                continue
+
+            for feature in core_features:
+
+                value = str(
+                    row.get(feature)
+                )
+
+                current = (
+                    audit[feature][label]
+                    .get(value, 0)
+                )
+
+                audit[feature][label][value] = (
+                    current + 1
+                )
+
+        return audit
+
+    def build_dead_feature_audit(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        if not prepared_rows:
+            return {}
+
+        feature_names = list(
+            prepared_rows[0].keys()
+        )
+
+        audit = {}
+
+        for feature in feature_names:
+
+            unique_values = set()
+
+            for row in prepared_rows:
+
+                unique_values.add(
+                    str(row.get(feature))
+                )
+
+            audit[feature] = {
+                "unique_count": len(unique_values),
+                "values": sorted(
+                    list(unique_values)
+                )[:10]
+            }
+
+        return audit
+
+    def get_core_training_feature_columns(self):
+
+        return [
+            "setup_type",
+            "setup_grade",
+            "confidence_score"
+        ]
+
+    def build_core_feature_matrix(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        core_columns = (
+            self.get_core_training_feature_columns()
+        )
+
+        core_matrix = []
+
+        for row in prepared_rows:
+
+            feature_row = {}
+
+            for column in core_columns:
+
+                feature_row[column] = row.get(column)
+
+            core_matrix.append(feature_row)
+
+        return core_matrix
+
+    def build_core_feature_matrix_report(self):
+
+        core_matrix = (
+            self.build_core_feature_matrix()
+        )
+
+        feature_count = 0
+
+        if len(core_matrix) > 0:
+            feature_count = len(core_matrix[0])
+
+        return {
+            "rows": len(core_matrix),
+            "feature_count": feature_count,
+            "features": self.get_core_training_feature_columns()
+        }
+
+    def encode_core_feature_row(self, feature_row):
+
+        encoded_row = {}
+
+        setup_type = feature_row.get("setup_type")
+        setup_grade = feature_row.get("setup_grade")
+
+        encoded_row["setup_type_BREAKOUT_SETUP"] = int(
+            setup_type == "BREAKOUT_SETUP"
+        )
+
+        encoded_row["setup_type_BREAKDOWN_SETUP"] = int(
+            setup_type == "BREAKDOWN_SETUP"
+        )
+
+        encoded_row["setup_type_ABSORPTION_SETUP"] = int(
+            setup_type == "ABSORPTION_SETUP"
+        )
+
+        encoded_row["setup_type_BALANCED_MARKET"] = int(
+            setup_type == "BALANCED_MARKET"
+        )
+
+        encoded_row["setup_grade"] = {
+            "A_SETUP": 2,
+            "B_SETUP": 1,
+            "C_SETUP": 0
+        }.get(setup_grade, 0)
+
+        try:
+            encoded_row["confidence_score"] = float(
+                feature_row.get("confidence_score")
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+            encoded_row["confidence_score"] = 0.0
+
+        return encoded_row
+
+    def build_encoded_core_feature_matrix(self):
+
+        core_matrix = (
+            self.build_core_feature_matrix()
+        )
+
+        encoded_matrix = []
+
+        for row in core_matrix:
+
+            encoded_matrix.append(
+                self.encode_core_feature_row(row)
+            )
+
+        return encoded_matrix
+
+    def build_encoded_core_feature_matrix_report(self):
+
+        encoded_matrix = (
+            self.build_encoded_core_feature_matrix()
+        )
+
+        text_columns = []
+
+        feature_count = 0
+
+        if len(encoded_matrix) > 0:
+
+            feature_count = len(
+                encoded_matrix[0]
+            )
+
+            for column, value in encoded_matrix[0].items():
+
+                if isinstance(value, str):
+                    text_columns.append(column)
+
+        return {
+            "rows": len(encoded_matrix),
+            "feature_count": feature_count,
+            "text_columns": text_columns,
+            "fully_numeric": len(text_columns) == 0
+        }
+
+    def build_core_training_target_vector(self):
+
+        return self.build_encoded_target_vector()
+
+    def build_core_training_shape_report(self):
+
+        encoded_matrix = (
+            self.build_encoded_core_feature_matrix()
+        )
+
+        target_vector = (
+            self.build_core_training_target_vector()
+        )
+
+        return {
+            "feature_rows": len(encoded_matrix),
+            "target_rows": len(target_vector),
+            "shape_valid": len(encoded_matrix) == len(target_vector)
+        }
+
+    def predict_with_core_rule_based_model(self, feature_row):
+
+        score = 0
+
+        if feature_row.get("setup_grade", 0) >= 2:
+            score += 1
+
+        if feature_row.get("confidence_score", 0) >= 90:
+            score += 2
+
+        if feature_row.get("setup_type_BREAKOUT_SETUP", 0) == 1:
+            score += 1
+
+        if feature_row.get("setup_type_BREAKDOWN_SETUP", 0) == 1:
+            score += 1
+
+        if score >= 3:
+            return 1
+
+        return 0
+
+    def build_core_rule_based_predictions(self):
+
+        encoded_matrix = (
+            self.build_encoded_core_feature_matrix()
+        )
+
+        predictions = []
+
+        for feature_row in encoded_matrix:
+
+            predictions.append(
+                self.predict_with_core_rule_based_model(
+                    feature_row
+                )
+            )
+
+        return predictions
+
+    def build_core_rule_based_accuracy_report(self):
+
+        predictions = (
+            self.build_core_rule_based_predictions()
+        )
+
+        actual_targets = (
+            self.build_core_training_target_vector()
+        )
+
+        correct_predictions = 0
+
+        for prediction, actual in zip(
+                predictions,
+                actual_targets
+        ):
+
+            if prediction == actual:
+                correct_predictions += 1
+
+        total_predictions = len(actual_targets)
+
+        accuracy = 0
+
+        if total_predictions > 0:
+            accuracy = round(
+                correct_predictions * 100 / total_predictions,
+                2
+            )
+
+        baseline_accuracy = (
+            self.build_baseline_accuracy_report()
+        )
+
+        return {
+            "model": "CORE_RULE_BASED",
+            "correct_predictions": correct_predictions,
+            "total_predictions": total_predictions,
+            "accuracy_percent": accuracy,
+            "baseline_accuracy": baseline_accuracy["accuracy_percent"],
+            "beats_baseline": accuracy > baseline_accuracy["accuracy_percent"]
+        }
+
+    def build_core_training_summary_report(self):
+
+        matrix_report = (
+            self.build_encoded_core_feature_matrix_report()
+        )
+
+        shape_report = (
+            self.build_core_training_shape_report()
+        )
+
+        accuracy_report = (
+            self.build_core_rule_based_accuracy_report()
+        )
+
+        return {
+            "feature_set": "CORE_FEATURE_SET_V1",
+            "features": self.get_core_training_feature_columns(),
+            "matrix_rows": matrix_report["rows"],
+            "feature_count": matrix_report["feature_count"],
+            "fully_numeric": matrix_report["fully_numeric"],
+            "shape_valid": shape_report["shape_valid"],
+            "core_rule_accuracy": accuracy_report["accuracy_percent"],
+            "baseline_accuracy": accuracy_report["baseline_accuracy"],
+            "beats_baseline": accuracy_report["beats_baseline"]
+        }
