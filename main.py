@@ -174,6 +174,25 @@ def print_footprint_decision_alignment_audit(
             and orderflow_score >= 1.0
     )
 
+    hvn_context = "NOT_HVN"
+
+    if context_engine.detect_volume_node() == "NEAR_HVN":
+
+        if (
+                footprint_data["footprint_score"] >= 1.5
+                and footprint_data["stack_strength"] in (
+                    "MEDIUM",
+                    "HIGH"
+                )
+        ):
+            hvn_context = "HVN_BREAKOUT_PRESSURE"
+
+        elif footprint_data["absorption_clue"]:
+            hvn_context = "HVN_REJECTION_ZONE"
+
+        else:
+            hvn_context = "HVN_ACCEPTANCE_ZONE"
+
     print(
         f"HVN Override Candidate: "
         f"{hvn_override_candidate}"
@@ -257,6 +276,25 @@ def run_scenario(scenario):
             )
             and orderflow_engine.calculate_score() >= 1.0
     )
+    hvn_context = "NOT_HVN"
+
+    if context_engine.detect_volume_node() == "NEAR_HVN":
+
+        if (
+                footprint_data["footprint_score"] >= 1.5
+                and footprint_data["stack_strength"] in (
+                "MEDIUM",
+                "HIGH"
+        )
+        ):
+            hvn_context = "HVN_BREAKOUT_PRESSURE"
+
+        elif footprint_data["absorption_clue"]:
+            hvn_context = "HVN_REJECTION_ZONE"
+
+        else:
+            hvn_context = "HVN_ACCEPTANCE_ZONE"
+
 
     print("----- Replay Summary -----")
     print(f"Orderflow Score: {orderflow_engine.calculate_score()}")
@@ -411,6 +449,7 @@ def run_scenario(scenario):
         "session": session_engine.detect_session(),
         "main_block_reason": main_block_reason,
         "hvn_override_candidate": hvn_override_candidate,
+        "hvn_context": hvn_context,
         "total_ticks": len(volume_engine.ticks),
         "total_volume": volume_engine.ask_volume + volume_engine.bid_volume,
         "final_cvd": volume_engine.cvd,
@@ -502,6 +541,9 @@ def run_scenario(scenario):
 
         "hvn_override_candidate":
             dataset_record["hvn_override_candidate"],
+
+        "hvn_context":
+            dataset_record["hvn_context"],
 
         "trade_outcome":
             dataset_record["trade_outcome"],
