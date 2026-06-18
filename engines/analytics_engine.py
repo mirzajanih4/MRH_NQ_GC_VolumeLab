@@ -505,3 +505,137 @@ class AnalyticsEngine:
         }
 
         return report
+
+    def build_hvn_context_snapshot(self):
+
+        snapshot = {}
+
+        snapshot["hvn_context_counts"] = (
+            self.count_by_field(
+                "hvn_context"
+            )
+        )
+
+        snapshot["hvn_context_win_rates"] = (
+            self.calculate_win_rate_by_field(
+                "hvn_context"
+            )
+        )
+
+        return snapshot
+
+    def build_hvn_trade_eligibility_snapshot(self):
+
+        snapshot = {}
+
+        snapshot["eligibility_counts"] = (
+            self.count_by_field(
+                "hvn_trade_eligibility"
+            )
+        )
+
+        snapshot["eligibility_win_rates"] = (
+            self.calculate_win_rate_by_field(
+                "hvn_trade_eligibility"
+            )
+        )
+
+        return snapshot
+
+    def build_hvn_eligibility_outcome_distribution(self):
+
+        records = self.load_records()
+
+        distribution = {}
+
+        for record in records:
+
+            eligibility = record[
+                "hvn_trade_eligibility"
+            ]
+
+            outcome = record[
+                "trade_outcome"
+            ]
+
+            if eligibility not in distribution:
+
+                distribution[eligibility] = {
+                    "WIN": 0,
+                    "LOSS": 0,
+                    "SKIPPED": 0
+                }
+
+            if outcome in (
+                    "WIN",
+                    "LOSS",
+                    "SKIPPED"
+            ):
+                distribution[
+                    eligibility
+                ][outcome] += 1
+
+        return distribution
+
+    def build_virtual_trade_distribution(self):
+
+        records = self.load_records()
+
+        distribution = {
+            "NO_VIRTUAL_TRADE": 0,
+            "VIRTUAL_LONG": 0,
+            "VIRTUAL_SHORT": 0,
+            "MISSING_FIELD": 0
+        }
+
+        for record in records:
+
+            direction = record.get(
+                "virtual_trade_direction",
+                "MISSING_FIELD"
+            )
+
+            if direction not in distribution:
+                distribution[direction] = 0
+
+            distribution[direction] += 1
+
+        return distribution
+
+    def build_virtual_dataset_snapshot(self):
+
+        records = self.load_records()
+
+        snapshot = {
+            "legacy_records": 0,
+            "virtual_records": 0,
+            "virtual_long": 0,
+            "virtual_short": 0
+        }
+
+        for record in records:
+
+            direction = record.get(
+                "virtual_trade_direction",
+                ""
+            )
+
+            if direction == "":
+                snapshot["legacy_records"] += 1
+
+            else:
+
+                snapshot["virtual_records"] += 1
+
+                if direction == "VIRTUAL_LONG":
+                    snapshot["virtual_long"] += 1
+
+                elif direction == "VIRTUAL_SHORT":
+                    snapshot["virtual_short"] += 1
+
+        return snapshot
+
+
+
+
+

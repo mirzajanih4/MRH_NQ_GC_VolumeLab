@@ -11,6 +11,9 @@ class RiskEngine:
         if session == "NEW_YORK":
             return 0.65
 
+        if session == "LONDON_NEW_YORK_OVERLAP":
+            return 0.65
+
         if session == "ASIA_OR_OFF_HOURS":
             return 0.90
 

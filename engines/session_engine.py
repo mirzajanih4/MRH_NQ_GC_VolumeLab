@@ -11,10 +11,13 @@ class SessionEngine:
         current_time = self.volume_engine.ticks[-1].timestamp
         hour = current_time.hour
 
+        if 13 <= hour < 16:
+            return "LONDON_NEW_YORK_OVERLAP"
+
         if 8 <= hour < 13:
             return "LONDON"
 
-        if 13 <= hour < 21:
+        if 16 <= hour < 21:
             return "NEW_YORK"
 
         return "ASIA_OR_OFF_HOURS"

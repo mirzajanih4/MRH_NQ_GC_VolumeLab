@@ -437,6 +437,15 @@ def run_scenario(scenario):
     else:
         trade_quality = "LOW_QUALITY"
 
+    virtual_trade_direction = "NO_VIRTUAL_TRADE"
+
+    if hvn_trade_eligibility == "CONDITIONAL_ELIGIBLE":
+
+        if footprint_data["stack_direction"] == "BUY":
+            virtual_trade_direction = "VIRTUAL_LONG"
+
+        elif footprint_data["stack_direction"] == "SELL":
+            virtual_trade_direction = "VIRTUAL_SHORT"
 
     dataset_record = {
         "scenario": scenario,
@@ -462,6 +471,8 @@ def run_scenario(scenario):
         "hvn_context": hvn_context,
         "hvn_trade_eligibility":
             hvn_trade_eligibility,
+        "virtual_trade_direction":
+            virtual_trade_direction,
         "total_ticks": len(volume_engine.ticks),
         "total_volume": volume_engine.ask_volume + volume_engine.bid_volume,
         "final_cvd": volume_engine.cvd,
@@ -560,6 +571,11 @@ def run_scenario(scenario):
         "hvn_trade_eligibility":
             dataset_record[
                 "hvn_trade_eligibility"
+            ],
+
+        "virtual_trade_direction":
+            dataset_record[
+                "virtual_trade_direction"
             ],
 
         "trade_outcome":
@@ -1206,6 +1222,48 @@ for item in analytics_engine.build_ranked_feature_importance():
         ml_training_engine
         .build_first_ml_model_report()
         )
+
+print("\n----- HVN Context Snapshot -----")
+
+print(
+    analytics_engine
+    .build_hvn_context_snapshot()
+)
+
+print("\n----- HVN Trade Eligibility Snapshot -----")
+
+print(
+    analytics_engine
+    .build_hvn_trade_eligibility_snapshot()
+)
+
+print(
+    "\n----- HVN Eligibility Outcome Distribution -----"
+)
+
+print(
+    analytics_engine
+    .build_hvn_eligibility_outcome_distribution()
+)
+
+print(
+    "\n----- Virtual Trade Distribution -----"
+)
+
+print(
+    analytics_engine
+    .build_virtual_trade_distribution()
+)
+
+print(
+    "\n----- Virtual Dataset Snapshot -----"
+)
+
+print(
+    analytics_engine
+    .build_virtual_dataset_snapshot()
+)
+
 
 print("\n----- Random Forest Report -----")
 
