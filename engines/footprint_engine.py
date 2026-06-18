@@ -40,8 +40,9 @@ class FootprintEngine:
                 current_ask_stack_volume = 0
                 if current_bid_stack > max_bid_stack:
                     max_bid_stack = current_bid_stack
-        if current_bid_stack_volume > max_bid_stack_volume:
-            max_bid_stack_volume = current_bid_stack_volume
+                    if current_bid_stack_volume > max_bid_stack_volume:
+                        max_bid_stack_volume = current_bid_stack_volume
+
         footprint_score = 0
 
         imbalance = abs(

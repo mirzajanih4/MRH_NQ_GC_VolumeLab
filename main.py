@@ -136,6 +136,55 @@ def get_ticks_by_scenario(scenario):
         return []
 
 
+def print_footprint_decision_alignment_audit(
+        scenario,
+        footprint_data,
+        strategy_decision,
+        final_signal,
+        strategy_reason,
+        risk_reason,
+        orderflow_score,
+        required_score
+):
+
+    print("----- STEP117 Footprint Decision Alignment Audit -----")
+    print(f"Scenario: {scenario}")
+    print(f"Stack Direction: {footprint_data['stack_direction']}")
+    print(f"Stack Strength: {footprint_data['stack_strength']}")
+    print(f"Footprint Score: {footprint_data['footprint_score']}")
+    print(f"Strategy Decision: {strategy_decision}")
+    print(f"Final Signal: {final_signal}")
+    print(f"Strategy Block Reason: {strategy_reason}")
+    print(f"Risk Block Reason: {risk_reason}")
+    print(f"Orderflow Score: {orderflow_score}")
+    print(f"Required Score: {required_score}")
+
+    strong_footprint = (
+            footprint_data["stack_strength"] in ("MEDIUM", "HIGH")
+            or footprint_data["footprint_score"] >= 1.0
+    )
+
+    hvn_override_candidate = (
+            strategy_reason == "HVN_ZONE"
+            and footprint_data["footprint_score"] >= 1.5
+            and footprint_data["stack_strength"] in (
+                "MEDIUM",
+                "HIGH"
+            )
+            and orderflow_score >= 1.0
+    )
+
+    print(
+        f"HVN Override Candidate: "
+        f"{hvn_override_candidate}"
+    )
+
+    if strong_footprint and final_signal == "NO_TRADE":
+        print("Alignment Status: STRONG_FOOTPRINT_BUT_NO_TRADE")
+    elif strong_footprint:
+        print("Alignment Status: STRONG_FOOTPRINT_ALIGNED")
+    else:
+        print("Alignment Status: WEAK_OR_NEUTRAL_FOOTPRINT")
 
 # ticks = get_ticks_by_scenario(scenario)
 def run_scenario(scenario):
@@ -177,6 +226,19 @@ def run_scenario(scenario):
         session_engine.detect_session()
     )
 
+    print_footprint_decision_alignment_audit(
+        scenario,
+        footprint_data,
+        nq_strategy.evaluate(),
+        nq_strategy.get_final_signal(risk_engine),
+        strategy_reason,
+        risk_reason,
+        orderflow_engine.calculate_score(),
+        risk_engine.get_required_score(
+            session_engine.detect_session()
+        )
+    )
+
     if strategy_reason != "NO_STRATEGY_BLOCK":
         main_block_reason = strategy_reason
 
@@ -185,6 +247,16 @@ def run_scenario(scenario):
 
     else:
         main_block_reason = "NO_BLOCK"
+
+    hvn_override_candidate = (
+            main_block_reason == "HVN_ZONE"
+            and footprint_data["footprint_score"] >= 1.5
+            and footprint_data["stack_strength"] in (
+                "MEDIUM",
+                "HIGH"
+            )
+            and orderflow_engine.calculate_score() >= 1.0
+    )
 
     print("----- Replay Summary -----")
     print(f"Orderflow Score: {orderflow_engine.calculate_score()}")
@@ -338,6 +410,7 @@ def run_scenario(scenario):
         "volume_node": context_engine.detect_volume_node(),
         "session": session_engine.detect_session(),
         "main_block_reason": main_block_reason,
+        "hvn_override_candidate": hvn_override_candidate,
         "total_ticks": len(volume_engine.ticks),
         "total_volume": volume_engine.ask_volume + volume_engine.bid_volume,
         "final_cvd": volume_engine.cvd,
@@ -426,6 +499,9 @@ def run_scenario(scenario):
 
         "stack_direction":
             dataset_record["stack_direction"],
+
+        "hvn_override_candidate":
+            dataset_record["hvn_override_candidate"],
 
         "trade_outcome":
             dataset_record["trade_outcome"],
