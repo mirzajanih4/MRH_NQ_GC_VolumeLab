@@ -44,20 +44,31 @@ class FootprintEngine:
             max_bid_stack_volume = current_bid_stack_volume
         footprint_score = 0
 
-        if buy_aggression > sell_aggression:
-            footprint_score += 0.5
+        imbalance = abs(
+            buy_aggression - sell_aggression
+        )
 
-        elif sell_aggression > buy_aggression:
-            footprint_score += 0.5
+        total_aggression = (
+            buy_aggression + sell_aggression
+        )
 
-        if abs(buy_aggression - sell_aggression) >= 20:
-            footprint_score += 0.5
+        if total_aggression >= 20:
+            footprint_score += 0.25
 
-        if (
-                max_ask_stack >= 3
-                or max_bid_stack >= 3
-        ):
-            footprint_score += 0.5
+        if total_aggression >= 50:
+            footprint_score += 0.25
+
+        if imbalance >= 10:
+            footprint_score += 0.25
+
+        if imbalance >= 25:
+            footprint_score += 0.25
+
+        if max_ask_stack >= 2 or max_bid_stack >= 2:
+            footprint_score += 0.25
+
+        if max_ask_stack >= 3 or max_bid_stack >= 3:
+            footprint_score += 0.25
 
         delta_exhaustion = False
 

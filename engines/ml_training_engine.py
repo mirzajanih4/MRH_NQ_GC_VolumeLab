@@ -1,5 +1,9 @@
 import csv
-
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+import numpy as np
 
 class MLTrainingEngine:
 
@@ -215,6 +219,119 @@ class MLTrainingEngine:
             "train_count": len(train_rows),
             "test_count": len(test_rows),
             "train_ratio": train_ratio
+        }
+
+    def encode_core_v2_feature_row(self, row):
+
+        encoded_row = {}
+
+        setup_type = row.get("setup_type")
+        setup_grade = row.get("setup_grade")
+
+        encoded_row["setup_type_BREAKOUT_SETUP"] = int(
+            setup_type == "BREAKOUT_SETUP"
+        )
+
+        encoded_row["setup_type_BREAKDOWN_SETUP"] = int(
+            setup_type == "BREAKDOWN_SETUP"
+        )
+
+        encoded_row["setup_type_ABSORPTION_SETUP"] = int(
+            setup_type == "ABSORPTION_SETUP"
+        )
+
+        encoded_row["setup_type_BALANCED_MARKET"] = int(
+            setup_type == "BALANCED_MARKET"
+        )
+
+        encoded_row["setup_grade"] = {
+            "A_SETUP": 2,
+            "B_SETUP": 1,
+            "C_SETUP": 0
+        }.get(setup_grade, 0)
+
+        try:
+            encoded_row["confidence_score"] = float(
+                row.get("confidence_score")
+            )
+        except (
+            TypeError,
+            ValueError
+        ):
+            encoded_row["confidence_score"] = 0.0
+
+        try:
+            encoded_row["footprint_score"] = float(
+                row.get("footprint_score")
+            )
+        except (
+            TypeError,
+            ValueError
+        ):
+            encoded_row["footprint_score"] = 0.0
+
+        encoded_row["stack_strength"] = {
+            "HIGH": 3,
+            "MEDIUM": 2,
+            "LOW": 1,
+            "NONE": 0
+        }.get(row.get("stack_strength"), 0)
+
+
+        return encoded_row
+
+    def build_encoded_core_v2_feature_matrix(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        encoded_matrix = []
+
+        for row in prepared_rows:
+
+            encoded_matrix.append(
+                self.encode_core_v2_feature_row(row)
+            )
+
+        return encoded_matrix
+
+
+    def build_ml_train_test_data(self):
+
+        encoded_matrix = (
+            self.build_encoded_core_v2_feature_matrix()
+        )
+
+        X = []
+
+        for row in encoded_matrix:
+
+            X.append(
+                list(row.values())
+            )
+
+        y = (
+            self.build_core_training_target_vector()
+        )
+
+        X_train, X_test, y_train, y_test = (
+            train_test_split(
+                X,
+                y,
+                test_size=0.20,
+                random_state=42,
+                stratify=y
+            )
+        )
+
+        return {
+            "X_train": X_train,
+            "y_train": y_train,
+            "X_test": X_test,
+            "y_test": y_test
         }
 
     def build_train_test_split_stats(self):
@@ -1383,6 +1500,17 @@ class MLTrainingEngine:
             "confidence_score"
         ]
 
+    def get_core_v2_training_feature_columns(self):
+
+        return [
+            "setup_type",
+            "setup_grade",
+            "confidence_score",
+            "footprint_score",
+            "stack_strength",
+            "trade_quality"
+        ]
+
     def build_core_feature_matrix(self):
 
         records = self.load_dataset()
@@ -1639,3 +1767,762 @@ class MLTrainingEngine:
             "baseline_accuracy": accuracy_report["baseline_accuracy"],
             "beats_baseline": accuracy_report["beats_baseline"]
         }
+
+    def train_first_ml_model(self):
+
+        feature_matrix = (
+            self.build_encoded_core_feature_matrix()
+        )
+
+        target_vector = (
+            self.build_core_training_target_vector()
+        )
+
+        X = []
+
+        for row in feature_matrix:
+
+            X.append(
+                list(row.values())
+            )
+
+        y = target_vector
+
+        model = DecisionTreeClassifier(
+            random_state=42,
+            max_depth=3
+        )
+
+        model.fit(
+            X,
+            y
+        )
+
+        predictions = model.predict(
+            X
+        )
+
+        accuracy = accuracy_score(
+            y,
+            predictions
+        )
+
+        return {
+            "model": model,
+            "accuracy_percent": round(
+                accuracy * 100,
+                2
+            ),
+            "samples": len(X)
+        }
+
+    def build_first_ml_model_report(self):
+
+        training_result = (
+            self.train_first_ml_model()
+        )
+
+        baseline = (
+            self.build_baseline_accuracy_report()
+        )
+
+        return {
+            "model": "DECISION_TREE_V1",
+            "samples": training_result["samples"],
+            "accuracy_percent":
+                training_result["accuracy_percent"],
+            "baseline_accuracy":
+                baseline["accuracy_percent"],
+            "beats_baseline":
+                training_result["accuracy_percent"]
+                >
+                baseline["accuracy_percent"]
+        }
+
+    def train_first_ml_model(self):
+
+        data = self.build_ml_train_test_data()
+
+        X_train = data["X_train"]
+        y_train = data["y_train"]
+
+        X_test = data["X_test"]
+        y_test = data["y_test"]
+
+        model = DecisionTreeClassifier(
+            random_state=42,
+            max_depth=3
+        )
+
+        model.fit(X_train, y_train)
+
+        predictions = model.predict(X_test)
+
+        accuracy = accuracy_score(y_test, predictions)
+
+        return {
+            "model": model,
+            "accuracy_percent": round(accuracy * 100, 2),
+            "test_samples": len(X_test),
+            "train_samples": len(X_train)
+        }
+
+    def build_first_ml_model_report(self):
+
+        result = self.train_first_ml_model()
+
+        baseline = self.build_baseline_accuracy_report()
+
+        return {
+            "model": "DECISION_TREE_V1",
+            "train_samples": result["train_samples"],
+            "test_samples": result["test_samples"],
+            "ml_accuracy": result["accuracy_percent"],
+            "baseline_accuracy": baseline["accuracy_percent"],
+            "beats_baseline": result["accuracy_percent"] > baseline["accuracy_percent"]
+        }
+
+    def train_random_forest_model(self):
+
+        data = self.build_ml_train_test_data()
+
+        X_train = data["X_train"]
+        y_train = data["y_train"]
+
+        X_test = data["X_test"]
+        y_test = data["y_test"]
+
+        model = RandomForestClassifier(
+            n_estimators=100,
+            random_state=42,
+            max_depth=5
+        )
+
+        model.fit(
+            X_train,
+            y_train
+        )
+
+        predictions = model.predict(
+            X_test
+        )
+
+        accuracy = accuracy_score(
+            y_test,
+            predictions
+        )
+
+        return {
+            "model": model,
+            "accuracy_percent": round(
+                accuracy * 100,
+                2
+            ),
+            "train_samples": len(X_train),
+            "test_samples": len(X_test)
+        }
+
+    def build_random_forest_report(self):
+
+        result = (
+            self.train_random_forest_model()
+        )
+
+        baseline = (
+            self.build_baseline_accuracy_report()
+        )
+
+        return {
+            "model": "RANDOM_FOREST_V1",
+            "train_samples": result["train_samples"],
+            "test_samples": result["test_samples"],
+            "ml_accuracy": result["accuracy_percent"],
+            "baseline_accuracy":
+                baseline["accuracy_percent"],
+            "beats_baseline":
+                result["accuracy_percent"]
+                >
+                baseline["accuracy_percent"]
+        }
+
+    def build_random_forest_overfitting_report(self):
+
+        data = self.build_ml_train_test_data()
+
+        X_train = data["X_train"]
+        y_train = data["y_train"]
+
+        X_test = data["X_test"]
+        y_test = data["y_test"]
+
+        model = RandomForestClassifier(
+            n_estimators=100,
+            random_state=42,
+            max_depth=5
+        )
+
+        model.fit(
+            X_train,
+            y_train
+        )
+
+        train_predictions = model.predict(
+            X_train
+        )
+
+        test_predictions = model.predict(
+            X_test
+        )
+
+        train_accuracy = accuracy_score(
+            y_train,
+            train_predictions
+        )
+
+        test_accuracy = accuracy_score(
+            y_test,
+            test_predictions
+        )
+
+        gap = abs(
+            train_accuracy - test_accuracy
+        )
+
+        return {
+            "model": "RANDOM_FOREST_V1",
+            "train_accuracy": round(train_accuracy * 100, 2),
+            "test_accuracy": round(test_accuracy * 100, 2),
+            "accuracy_gap": round(gap * 100, 2),
+            "overfitting_risk": gap > 0.15
+        }
+
+    def build_feature_importance_report(self):
+
+        data = self.build_ml_train_test_data()
+
+        X_train = data["X_train"]
+        y_train = data["y_train"]
+
+        feature_names = [
+            "setup_type_BREAKOUT_SETUP",
+            "setup_type_BREAKDOWN_SETUP",
+            "setup_type_ABSORPTION_SETUP",
+            "setup_type_BALANCED_MARKET",
+            "setup_grade",
+            "confidence_score",
+            "footprint_score",
+            "stack_strength",
+
+        ]
+
+        model = RandomForestClassifier(
+            n_estimators=100,
+            random_state=42,
+            max_depth=5
+        )
+
+        model.fit(X_train, y_train)
+
+        importances = model.feature_importances_
+
+        importance_report = []
+
+        for name, score in zip(feature_names, importances):
+
+            importance_report.append({
+                "feature": name,
+                "importance": round(float(score), 4)
+            })
+
+        importance_report.sort(
+            key=lambda x: x["importance"],
+            reverse=True
+        )
+
+        return {
+            "model": "RANDOM_FOREST_V1",
+            "feature_importance": importance_report
+        }
+
+    def build_core_v2_dependency_safety_audit(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        dependency_map = {}
+
+        for row in prepared_rows:
+
+            key = (
+                str(row.get("setup_grade")),
+                str(row.get("footprint_score")),
+                str(row.get("trade_quality"))
+            )
+
+            dependency_map[key] = (
+                dependency_map.get(key, 0) + 1
+            )
+
+        suspicious_patterns = []
+
+        for key, count in dependency_map.items():
+
+            setup_grade = key[0]
+            footprint_score = key[1]
+            trade_quality = key[2]
+
+            if (
+                setup_grade == "A_SETUP"
+                and trade_quality == "HIGH_QUALITY"
+            ):
+                suspicious_patterns.append({
+                    "pattern": key,
+                    "count": count,
+                    "reason": "A_SETUP strongly maps to HIGH_QUALITY"
+                })
+
+            if (
+                setup_grade == "B_SETUP"
+                and trade_quality == "MEDIUM_QUALITY"
+            ):
+                suspicious_patterns.append({
+                    "pattern": key,
+                    "count": count,
+                    "reason": "B_SETUP strongly maps to MEDIUM_QUALITY"
+                })
+
+        return {
+            "audit": "CORE_V2_DEPENDENCY_SAFETY",
+            "total_patterns": len(dependency_map),
+            "suspicious_patterns": suspicious_patterns,
+            "suspicious_pattern_count": len(suspicious_patterns),
+            "requires_review": len(suspicious_patterns) > 0
+        }
+
+    def build_feature_expansion_benchmark(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        X = []
+        y = []
+
+        for row in prepared_rows:
+
+            feature_row = {}
+
+            feature_row["setup_grade"] = {
+                "A_SETUP": 2,
+                "B_SETUP": 1,
+                "C_SETUP": 0
+            }.get(row.get("setup_grade"), 0)
+
+            feature_row["confidence_score"] = float(
+                row.get("confidence_score", 0)
+            )
+
+            feature_row["footprint_score"] = float(
+                row.get("footprint_score", 0)
+            )
+
+            feature_row["stack_strength"] = {
+                "HIGH": 3,
+                "MEDIUM": 2,
+                "LOW": 1,
+                "NONE": 0
+            }.get(row.get("stack_strength"), 0)
+
+            feature_row["trade_quality"] = {
+                "HIGH_QUALITY": 3,
+                "MEDIUM_QUALITY": 2,
+                "LOW_QUALITY": 1
+            }.get(row.get("trade_quality"), 0)
+
+            feature_row["setup_type_BREAKOUT"] = int(
+                row.get("setup_type") == "BREAKOUT_SETUP"
+            )
+
+            feature_row["setup_type_BREAKDOWN"] = int(
+                row.get("setup_type") == "BREAKDOWN_SETUP"
+            )
+
+            feature_row["setup_type_ABSORPTION"] = int(
+                row.get("setup_type") == "ABSORPTION_SETUP"
+            )
+
+            X.append(
+                list(feature_row.values())
+            )
+
+            y.append(
+                1 if row.get("trade_label") == "WIN"
+                else 0
+            )
+
+        X_train, X_test, y_train, y_test = (
+            train_test_split(
+                X,
+                y,
+                test_size=0.20,
+                random_state=42,
+                stratify=y
+            )
+        )
+
+        model = RandomForestClassifier(
+            n_estimators=100,
+            random_state=42,
+            max_depth=5
+        )
+
+        model.fit(
+            X_train,
+            y_train
+        )
+
+        predictions = model.predict(
+            X_test
+        )
+
+        accuracy = accuracy_score(
+            y_test,
+            predictions
+        )
+
+        return {
+            "feature_set": "CORE_V2",
+            "feature_count": len(X[0]),
+            "accuracy_percent":
+                round(accuracy * 100, 2)
+        }
+
+    def build_feature_interaction_benchmark(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        X = []
+        y = []
+
+        for row in prepared_rows:
+
+            setup_grade = {
+                "A_SETUP": 2,
+                "B_SETUP": 1,
+                "C_SETUP": 0
+            }.get(row.get("setup_grade"), 0)
+
+            footprint_score = float(
+                row.get("footprint_score", 0)
+            )
+
+            stack_strength = {
+                "HIGH": 3,
+                "MEDIUM": 2,
+                "LOW": 1,
+                "NONE": 0
+            }.get(row.get("stack_strength"), 0)
+
+            confidence_score = float(
+                row.get("confidence_score", 0)
+            )
+
+            setup_type_breakout = int(
+                row.get("setup_type") == "BREAKOUT_SETUP"
+            )
+
+            setup_type_breakdown = int(
+                row.get("setup_type") == "BREAKDOWN_SETUP"
+            )
+
+            setup_grade_x_footprint = (
+                setup_grade * footprint_score
+            )
+
+            setup_type_x_stack = (
+                (setup_type_breakout + setup_type_breakdown)
+                * stack_strength
+            )
+
+            confidence_x_footprint = (
+                confidence_score * footprint_score
+            )
+
+            feature_row = [
+                setup_grade,
+                footprint_score,
+                stack_strength,
+                confidence_score,
+                setup_type_breakout,
+                setup_type_breakdown,
+                setup_grade_x_footprint,
+                setup_type_x_stack,
+                confidence_x_footprint
+            ]
+
+            X.append(feature_row)
+
+            y.append(
+                1 if row.get("trade_label") == "WIN"
+                else 0
+            )
+
+        X_train, X_test, y_train, y_test = (
+            train_test_split(
+                X,
+                y,
+                test_size=0.20,
+                random_state=42,
+                stratify=y
+            )
+        )
+
+        model = RandomForestClassifier(
+            n_estimators=100,
+            random_state=42,
+            max_depth=5
+        )
+
+        model.fit(
+            X_train,
+            y_train
+        )
+
+        predictions = model.predict(
+            X_test
+        )
+
+        accuracy = accuracy_score(
+            y_test,
+            predictions
+        )
+
+        return {
+            "feature_set": "INTERACTION_V1",
+            "feature_count": len(X[0]),
+            "accuracy_percent": round(
+                accuracy * 100,
+                2
+            )
+        }
+
+    def build_confidence_dependency_audit(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = self.prepare_training_dataset(records)
+
+        dependency_map = {
+            "HIGH_CONFIDENCE": 0,
+            "MEDIUM_CONFIDENCE": 0,
+            "LOW_CONFIDENCE": 0
+        }
+
+        for row in prepared_rows:
+
+            confidence = float(row.get("confidence_score", 0))
+
+            setup_grade = row.get("setup_grade")
+            footprint = float(row.get("footprint_score", 0))
+            stack = row.get("stack_strength")
+
+            if confidence >= 85:
+                category = "HIGH_CONFIDENCE"
+            elif confidence >= 60:
+                category = "MEDIUM_CONFIDENCE"
+            else:
+                category = "LOW_CONFIDENCE"
+
+            key = (
+                str(setup_grade),
+                str(round(footprint, 1)),
+                str(stack),
+                category
+            )
+
+            dependency_map[key] = dependency_map.get(key, 0) + 1
+
+        suspicious_patterns = []
+
+        for key, count in dependency_map.items():
+
+            try:
+                setup_grade = key[0]
+                footprint = key[1]
+                stack = key[2]
+                conf = key[3]
+
+            except Exception:
+                continue
+
+            if conf == "HIGH_CONFIDENCE" and setup_grade == "C_SETUP":
+                suspicious_patterns.append({
+                    "pattern": key,
+                    "reason": "High confidence with weak setup"
+                })
+
+            if conf == "LOW_CONFIDENCE" and setup_grade == "A_SETUP":
+                suspicious_patterns.append({
+                    "pattern": key,
+                    "reason": "Low confidence with strong setup"
+                })
+
+        return {
+            "audit": "CONFIDENCE_DEPENDENCY_V1",
+            "total_patterns": len(dependency_map),
+            "suspicious_patterns": suspicious_patterns,
+            "risk": len(suspicious_patterns) > 0
+        }
+
+    def build_signal_independence_map(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        features = [
+            "setup_grade",
+            "confidence_score",
+            "footprint_score",
+            "stack_strength",
+            "setup_type"
+        ]
+
+        result = {}
+
+        total_rows = len(prepared_rows)
+
+        for feature in features:
+
+            unique_values = set()
+
+            for row in prepared_rows:
+
+                unique_values.add(
+                    str(row.get(feature))
+                )
+
+            unique_count = len(unique_values)
+
+            independence_score = round(
+                unique_count / total_rows,
+                4
+            )
+
+            result[feature] = {
+                "unique_values": unique_count,
+                "independence_score": independence_score
+            }
+
+        return result
+
+    def build_feature_purification_report(self):
+
+        independence_map = (
+            self.build_signal_independence_map()
+        )
+
+        feature_roles = {
+            "setup_type": "DERIVED_MARKET_STRUCTURE",
+            "setup_grade": "DERIVED_QUALITY_SCORE",
+            "confidence_score": "AGGREGATED_CONFIDENCE",
+            "footprint_score": "RAW_MARKET_SIGNAL_CANDIDATE",
+            "stack_strength": "RAW_MARKET_SIGNAL_CANDIDATE",
+            "trade_quality": "DEPENDENCY_RISK"
+        }
+
+        report = {}
+
+        for feature, role in feature_roles.items():
+
+            independence_score = 0
+
+            if feature in independence_map:
+                independence_score = (
+                    independence_map[feature]
+                    ["independence_score"]
+                )
+
+            if feature == "trade_quality":
+                status = "EXCLUDE_FROM_CORE_ML"
+
+            elif independence_score <= 0.002:
+                status = "DEAD_OR_CONSTANT_SIGNAL"
+
+            elif role.startswith("RAW_MARKET_SIGNAL"):
+                status = "RAW_SIGNAL_NEEDS_REBUILD"
+
+            else:
+                status = "KEEP_WITH_REVIEW"
+
+            report[feature] = {
+                "role": role,
+                "independence_score": independence_score,
+                "status": status
+            }
+
+        return {
+            "audit": "FEATURE_PURIFICATION_V1",
+            "report": report
+        }
+
+    def build_footprint_signal_diagnostic_report(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        fields = [
+            "footprint_score",
+            "stack_strength",
+            "buy_aggression",
+            "sell_aggression",
+            "bid_ask_imbalance",
+            "delta_exhaustion",
+            "absorption_clue",
+            "stacked_imbalance",
+            "stack_direction"
+        ]
+
+        report = {}
+
+        for field in fields:
+
+            values = []
+
+            for row in prepared_rows:
+                values.append(
+                    str(row.get(field))
+                )
+
+            unique_values = sorted(
+                list(set(values))
+            )
+
+            report[field] = {
+                "unique_count": len(unique_values),
+                "sample_values": unique_values[:10]
+            }
+
+        return {
+            "audit": "FOOTPRINT_SIGNAL_DIAGNOSTIC_V1",
+            "report": report
+        }
+
+
+
+
+

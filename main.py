@@ -13,8 +13,12 @@ from data.sample_ticks import (
     get_sample_buy_lvn_ticks,
     get_sample_absorption_ticks,
     get_sample_sweep_absorption_ticks,
-    get_sample_sell_lvn_ticks
+    get_sample_sell_lvn_ticks,
+    get_sample_weak_footprint_ticks,
+    get_sample_buy_stack_ticks,
+    get_sample_sell_stack_ticks
 )
+
 import csv
 from data.csv_loader import load_ticks_from_csv
 from engines.session_engine import SessionEngine
@@ -41,7 +45,6 @@ nq_strategy = NQStrategy(
 # scenario = "CSV"
 scenario = "CSV"
 scenario_list = [
-    # Original scenarios
     "BUY",
     "SELL",
     "NO_TRADE",
@@ -50,8 +53,6 @@ scenario_list = [
     "ABSORPTION",
     "SWEEP_ABSORPTION",
     "CSV",
-
-    # STEP 101.3 Counter scenarios
     "BUY_FAILED",
     "SELL_FAILED",
     "BUY_WEAK_WIN",
@@ -62,7 +63,12 @@ scenario_list = [
     "SELL_B_WIN",
     "BUY_A_LOSS",
     "SELL_A_LOSS",
+    "WEAK_FOOTPRINT",
+    "BUY_STACK",
+    "SELL_STACK",
 ]
+
+
 
 def get_ticks_by_scenario(scenario):
 
@@ -118,6 +124,14 @@ def get_ticks_by_scenario(scenario):
 
     elif scenario == "SELL_A_LOSS":
         return get_sample_sell_ticks()
+    elif scenario == "WEAK_FOOTPRINT":
+        return get_sample_weak_footprint_ticks()
+
+    elif scenario == "BUY_STACK":
+        return get_sample_buy_stack_ticks()
+
+    elif scenario == "SELL_STACK":
+        return get_sample_sell_stack_ticks()
     else:
         return []
 
@@ -391,6 +405,27 @@ def run_scenario(scenario):
 
         "stack_strength":
             dataset_record["stack_strength"],
+
+        "buy_aggression":
+            dataset_record["buy_aggression"],
+
+        "sell_aggression":
+            dataset_record["sell_aggression"],
+
+        "bid_ask_imbalance":
+            dataset_record["bid_ask_imbalance"],
+
+        "delta_exhaustion":
+            dataset_record["delta_exhaustion"],
+
+        "absorption_clue":
+            dataset_record["absorption_clue"],
+
+        "stacked_imbalance":
+            dataset_record["stacked_imbalance"],
+
+        "stack_direction":
+            dataset_record["stack_direction"],
 
         "trade_outcome":
             dataset_record["trade_outcome"],
@@ -966,8 +1001,6 @@ for item in analytics_engine.build_ranked_feature_importance():
         )
 
 
-
-
         print("\n----- Numeric Feature Matrix Sample (first 3 rows) -----")
 
         for row in numeric_feature_matrix[:3]:
@@ -1032,6 +1065,86 @@ for item in analytics_engine.build_ranked_feature_importance():
             split_quality_report
         )
 
+        print("\n----- First ML Model Report -----")
+
+        print(
+        ml_training_engine
+        .build_first_ml_model_report()
+        )
+
+print("\n----- Random Forest Report -----")
+
+print(
+    ml_training_engine
+    .build_random_forest_report()
+)
+
+print("\n----- Random Forest Overfitting Report -----")
+
+print(
+    ml_training_engine
+    .build_random_forest_overfitting_report()
+)
+print("\n----- Feature Importance Report -----")
+
+print(
+    ml_training_engine
+    .build_feature_importance_report()
+)
+
+print("\n----- Confidence Dependency Audit -----")
+
+print(
+    ml_training_engine.build_confidence_dependency_audit()
+)
+
+print("\n----- Signal Independence Map -----")
+
+print(
+    ml_training_engine
+    .build_signal_independence_map()
+)
+
+print("\n----- Feature Purification Report -----")
+
+print(
+    ml_training_engine
+    .build_feature_purification_report()
+)
+
+print("\n----- Footprint Signal Diagnostic Report -----")
+
+print(
+    ml_training_engine
+    .build_footprint_signal_diagnostic_report()
+)
+
+
+print("\n----- CORE V2 Dependency Safety Audit -----")
+
+print(
+    ml_training_engine
+    .build_core_v2_dependency_safety_audit()
+)
+
+print("\n----- Feature Expansion Benchmark -----")
+
+print(
+    ml_training_engine
+    .build_feature_expansion_benchmark()
+)
+
+print("\n----- Feature Interaction Benchmark -----")
+
+print(
+    ml_training_engine
+    .build_feature_interaction_benchmark()
+)
+
+print(
+    ml_training_engine
+    .build_random_forest_overfitting_report()
+)
 
 print("\n----- Probability Model Snapshot -----")
 
@@ -1067,3 +1180,11 @@ with open(
             ])
 
 print("Probability Model Snapshot saved.")
+
+for scenario in scenario_list:
+
+    print(
+        f"\n===== RUNNING SCENARIO: {scenario} ====="
+    )
+
+    run_scenario(scenario)
