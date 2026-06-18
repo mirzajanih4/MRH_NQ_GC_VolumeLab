@@ -295,6 +295,16 @@ def run_scenario(scenario):
         else:
             hvn_context = "HVN_ACCEPTANCE_ZONE"
 
+    hvn_trade_eligibility = "NOT_ELIGIBLE"
+
+    if (
+            hvn_override_candidate
+            and hvn_context == "HVN_BREAKOUT_PRESSURE"
+    ):
+        hvn_trade_eligibility = (
+            "CONDITIONAL_ELIGIBLE"
+        )
+
 
     print("----- Replay Summary -----")
     print(f"Orderflow Score: {orderflow_engine.calculate_score()}")
@@ -450,6 +460,8 @@ def run_scenario(scenario):
         "main_block_reason": main_block_reason,
         "hvn_override_candidate": hvn_override_candidate,
         "hvn_context": hvn_context,
+        "hvn_trade_eligibility":
+            hvn_trade_eligibility,
         "total_ticks": len(volume_engine.ticks),
         "total_volume": volume_engine.ask_volume + volume_engine.bid_volume,
         "final_cvd": volume_engine.cvd,
@@ -544,6 +556,11 @@ def run_scenario(scenario):
 
         "hvn_context":
             dataset_record["hvn_context"],
+
+        "hvn_trade_eligibility":
+            dataset_record[
+                "hvn_trade_eligibility"
+            ],
 
         "trade_outcome":
             dataset_record["trade_outcome"],
