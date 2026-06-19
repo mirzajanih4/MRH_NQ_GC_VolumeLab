@@ -875,6 +875,87 @@ class AnalyticsEngine:
             "not_eligible_records": not_eligible_records
         }
 
+    def build_opportunity_population_validation(self):
+
+        records = self.load_records()
+
+        validation = {}
+
+        for record in records:
+
+            grade = record.get(
+                "virtual_opportunity_grade",
+                "UNKNOWN"
+            )
+
+            outcome = record.get(
+                "virtual_trade_outcome",
+                "PENDING"
+            )
+
+            edge_score = float(
+                record.get(
+                    "virtual_edge_score",
+                    0
+                )
+            )
+
+            if grade not in validation:
+
+                validation[grade] = {
+                    "wins": 0,
+                    "losses": 0,
+                    "sample_size": 0,
+                    "edge_total": 0
+                }
+
+            if outcome == "VIRTUAL_WIN":
+
+                validation[grade]["wins"] += 1
+                validation[grade]["sample_size"] += 1
+
+            elif outcome == "VIRTUAL_LOSS":
+
+                validation[grade]["losses"] += 1
+                validation[grade]["sample_size"] += 1
+
+            validation[grade]["edge_total"] += edge_score
+
+        report = {}
+
+        for grade, data in validation.items():
+
+            sample_size = data["sample_size"]
+
+            if sample_size > 0:
+
+                win_rate = round(
+                    (
+                        data["wins"]
+                        / sample_size
+                    ) * 100,
+                    2
+                )
+
+                avg_edge = round(
+                    data["edge_total"]
+                    / sample_size,
+                    2
+                )
+
+            else:
+
+                win_rate = 0
+                avg_edge = 0
+
+            report[grade] = {
+                "sample_size": sample_size,
+                "win_rate": win_rate,
+                "average_edge_score": avg_edge
+            }
+
+        return report
+
 
 
 

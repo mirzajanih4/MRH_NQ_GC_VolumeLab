@@ -466,6 +466,76 @@ def run_scenario(scenario):
         else:
             virtual_trade_outcome = "VIRTUAL_LOSS"
 
+    virtual_opportunity_score = 0
+
+    if hvn_trade_eligibility == "CONDITIONAL_ELIGIBLE":
+        virtual_opportunity_score += 25
+
+    if hvn_context == "HVN_BREAKOUT_PRESSURE":
+        virtual_opportunity_score += 25
+
+    if footprint_data["stack_strength"] == "MEDIUM":
+        virtual_opportunity_score += 20
+
+    elif footprint_data["stack_strength"] == "HIGH":
+        virtual_opportunity_score += 25
+
+    if footprint_data["footprint_score"] >= 1.5:
+        virtual_opportunity_score += 25
+
+    elif footprint_data["footprint_score"] >= 1.0:
+        virtual_opportunity_score += 15
+
+    virtual_opportunity_grade = "LOW_OPPORTUNITY"
+
+    baseline = 50
+
+    if hvn_trade_eligibility == "CONDITIONAL_ELIGIBLE":
+        edge_score = virtual_opportunity_score - baseline
+
+    else:
+        edge_score = 0
+
+        if edge_score >= 40:
+            edge_label = "STRONG_EDGE"
+
+        elif edge_score >= 20:
+            edge_label = "POSITIVE_EDGE"
+
+        elif edge_score >= 0:
+            edge_label = "WEAK_EDGE"
+
+        else:
+            edge_label = "NO_EDGE"
+
+    if virtual_opportunity_score >= 90:
+        virtual_opportunity_grade = "ELITE_OPPORTUNITY"
+
+    elif virtual_opportunity_score >= 70:
+        virtual_opportunity_grade = "HIGH_OPPORTUNITY"
+
+    elif virtual_opportunity_score >= 50:
+        virtual_opportunity_grade = "MEDIUM_OPPORTUNITY"
+
+    baseline = 50
+
+    if hvn_trade_eligibility == "CONDITIONAL_ELIGIBLE":
+        edge_score = virtual_opportunity_score - baseline
+
+    else:
+        edge_score = 0
+
+    edge_label = "NO_EDGE"
+
+    if edge_score >= 40:
+        edge_label = "STRONG_EDGE"
+
+    elif edge_score >= 20:
+        edge_label = "POSITIVE_EDGE"
+
+    elif edge_score >= 0:
+        edge_label = "WEAK_EDGE"
+
 
     dataset_record = {
         "scenario": scenario,
@@ -500,6 +570,18 @@ def run_scenario(scenario):
 
         "virtual_trade_outcome":
             virtual_trade_outcome,
+
+        "virtual_opportunity_score":
+            virtual_opportunity_score,
+
+        "virtual_opportunity_grade":
+            virtual_opportunity_grade,
+
+        "virtual_edge_score":
+            edge_score,
+
+        "virtual_edge_label":
+            edge_label,
 
         "total_ticks": len(volume_engine.ticks),
         "total_volume": volume_engine.ask_volume + volume_engine.bid_volume,
@@ -611,6 +693,18 @@ def run_scenario(scenario):
                 "virtual_trade_outcome"
             ],
 
+        "virtual_opportunity_score":
+            dataset_record["virtual_opportunity_score"],
+
+        "virtual_opportunity_grade":
+            dataset_record["virtual_opportunity_grade"],
+
+        "virtual_edge_score":
+            dataset_record["virtual_edge_score"],
+
+        "virtual_edge_label":
+            dataset_record["virtual_edge_label"],
+
         "trade_outcome":
             dataset_record["trade_outcome"],
 
@@ -641,13 +735,19 @@ def run_scenario(scenario):
 
         print("ML Snapshot saved.")
 
-    save_dataset_record(
+    dataset_saved = save_dataset_record(
         "data/replay_results.csv",
 
         dataset_record
     )
 
-    print("Dataset record saved.")
+    if dataset_saved:
+        print("Dataset record saved.")
+
+    else:
+        print("Dataset record NOT saved due to schema mismatch.")
+
+
 for scenario in scenario_list:
 
     print()
@@ -1331,6 +1431,15 @@ print(
 print(
     analytics_engine
     .build_virtual_bias_audit()
+)
+
+print(
+    "\n----- Opportunity Population Validation -----"
+)
+
+print(
+    analytics_engine
+    .build_opportunity_population_validation()
 )
 
 
