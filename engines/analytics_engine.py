@@ -635,6 +635,52 @@ class AnalyticsEngine:
 
         return snapshot
 
+    def build_virtual_outcome_snapshot(self):
+
+        records = self.load_records()
+
+        snapshot = {
+            "virtual_wins": 0,
+            "virtual_losses": 0,
+            "pending": 0,
+            "virtual_win_rate": 0
+        }
+
+        for record in records:
+
+            outcome = record.get(
+                "virtual_trade_outcome",
+                "PENDING"
+            )
+
+            if outcome == "VIRTUAL_WIN":
+                snapshot["virtual_wins"] += 1
+
+            elif outcome == "VIRTUAL_LOSS":
+                snapshot["virtual_losses"] += 1
+
+            else:
+                snapshot["pending"] += 1
+
+        total_finished = (
+            snapshot["virtual_wins"]
+            + snapshot["virtual_losses"]
+        )
+
+        if total_finished > 0:
+
+            snapshot["virtual_win_rate"] = round(
+                (
+                    snapshot["virtual_wins"]
+                    / total_finished
+                ) * 100,
+                2
+            )
+
+        return snapshot
+
+
+
 
 
 

@@ -436,6 +436,7 @@ def run_scenario(scenario):
 
     else:
         trade_quality = "LOW_QUALITY"
+    market_phase = context_engine.detect_market_phase()
 
     virtual_trade_direction = "NO_VIRTUAL_TRADE"
 
@@ -446,6 +447,25 @@ def run_scenario(scenario):
 
         elif footprint_data["stack_direction"] == "SELL":
             virtual_trade_direction = "VIRTUAL_SHORT"
+
+    virtual_trade_outcome = "PENDING"
+
+    if virtual_trade_direction == "VIRTUAL_LONG":
+
+        if market_phase == "TREND_UP":
+            virtual_trade_outcome = "VIRTUAL_WIN"
+
+        else:
+            virtual_trade_outcome = "VIRTUAL_LOSS"
+
+    elif virtual_trade_direction == "VIRTUAL_SHORT":
+
+        if market_phase == "TREND_DOWN":
+            virtual_trade_outcome = "VIRTUAL_WIN"
+
+        else:
+            virtual_trade_outcome = "VIRTUAL_LOSS"
+
 
     dataset_record = {
         "scenario": scenario,
@@ -467,12 +487,20 @@ def run_scenario(scenario):
         "volume_node": context_engine.detect_volume_node(),
         "session": session_engine.detect_session(),
         "main_block_reason": main_block_reason,
+
         "hvn_override_candidate": hvn_override_candidate,
+
         "hvn_context": hvn_context,
+
         "hvn_trade_eligibility":
             hvn_trade_eligibility,
+
         "virtual_trade_direction":
             virtual_trade_direction,
+
+        "virtual_trade_outcome":
+            virtual_trade_outcome,
+
         "total_ticks": len(volume_engine.ticks),
         "total_volume": volume_engine.ask_volume + volume_engine.bid_volume,
         "final_cvd": volume_engine.cvd,
@@ -576,6 +604,11 @@ def run_scenario(scenario):
         "virtual_trade_direction":
             dataset_record[
                 "virtual_trade_direction"
+            ],
+
+        "virtual_trade_outcome":
+            dataset_record[
+                "virtual_trade_outcome"
             ],
 
         "trade_outcome":
@@ -1264,6 +1297,14 @@ print(
     .build_virtual_dataset_snapshot()
 )
 
+print(
+    "\n----- Virtual Outcome Snapshot -----"
+)
+
+print(
+    analytics_engine
+    .build_virtual_outcome_snapshot()
+)
 
 print("\n----- Random Forest Report -----")
 
