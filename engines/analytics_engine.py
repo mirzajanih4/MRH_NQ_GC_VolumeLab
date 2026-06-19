@@ -679,6 +679,201 @@ class AnalyticsEngine:
 
         return snapshot
 
+    def calculate_virtual_win_rate_by_field(self, field_name):
+
+        records = self.load_records()
+        stats = {}
+
+        for record in records:
+
+            field_value = record.get(field_name, "UNKNOWN")
+            virtual_outcome = record.get(
+                "virtual_trade_outcome",
+                "PENDING"
+            )
+
+            if field_value not in stats:
+                stats[field_value] = {
+                    "virtual_wins": 0,
+                    "virtual_losses": 0
+                }
+
+            if virtual_outcome == "VIRTUAL_WIN":
+                stats[field_value]["virtual_wins"] += 1
+
+            elif virtual_outcome == "VIRTUAL_LOSS":
+                stats[field_value]["virtual_losses"] += 1
+
+        win_rates = {}
+
+        for field_value, result in stats.items():
+
+            wins = result["virtual_wins"]
+            losses = result["virtual_losses"]
+            total = wins + losses
+
+            if total == 0:
+                win_rates[field_value] = 0
+
+            else:
+                win_rates[field_value] = round(
+                    (wins / total) * 100,
+                    2
+                )
+
+        return win_rates
+
+
+    def build_virtual_performance_sample_size_by_field(
+            self,
+            field_name
+    ):
+
+        records = self.load_records()
+        sample_sizes = {}
+
+        for record in records:
+
+            field_value = record.get(
+                field_name,
+                "UNKNOWN"
+            )
+
+            virtual_outcome = record.get(
+                "virtual_trade_outcome",
+                "PENDING"
+            )
+
+            if field_value not in sample_sizes:
+                sample_sizes[field_value] = {
+                    "virtual_wins": 0,
+                    "virtual_losses": 0,
+                    "finished_virtual_trades": 0
+                }
+
+            if virtual_outcome == "VIRTUAL_WIN":
+                sample_sizes[field_value]["virtual_wins"] += 1
+                sample_sizes[field_value]["finished_virtual_trades"] += 1
+
+            elif virtual_outcome == "VIRTUAL_LOSS":
+                sample_sizes[field_value]["virtual_losses"] += 1
+                sample_sizes[field_value]["finished_virtual_trades"] += 1
+
+        return sample_sizes
+
+
+
+    def build_virtual_performance_research_snapshot(self):
+
+        snapshot = {}
+
+        snapshot["virtual_win_rate_by_hvn_context"] = (
+            self.calculate_virtual_win_rate_by_field(
+                "hvn_context"
+            )
+        )
+
+        snapshot["virtual_win_rate_by_stack_direction"] = (
+            self.calculate_virtual_win_rate_by_field(
+                "stack_direction"
+            )
+        )
+
+        snapshot["virtual_win_rate_by_stack_strength"] = (
+            self.calculate_virtual_win_rate_by_field(
+                "stack_strength"
+            )
+        )
+
+        snapshot["virtual_win_rate_by_trade_eligibility"] = (
+            self.calculate_virtual_win_rate_by_field(
+                "hvn_trade_eligibility"
+            )
+        )
+
+        return snapshot
+
+
+    def build_virtual_performance_sample_size_report(self):
+
+        report = {}
+
+        report["sample_size_by_hvn_context"] = (
+            self.build_virtual_performance_sample_size_by_field(
+                "hvn_context"
+            )
+        )
+
+        report["sample_size_by_stack_direction"] = (
+            self.build_virtual_performance_sample_size_by_field(
+                "stack_direction"
+            )
+        )
+
+        report["sample_size_by_stack_strength"] = (
+            self.build_virtual_performance_sample_size_by_field(
+                "stack_strength"
+            )
+        )
+
+        report["sample_size_by_trade_eligibility"] = (
+            self.build_virtual_performance_sample_size_by_field(
+                "hvn_trade_eligibility"
+            )
+        )
+
+        return report
+
+    def build_virtual_bias_audit(self):
+
+        records = self.load_records()
+
+        total_records = len(records)
+
+        virtual_records = 0
+        eligible_records = 0
+        not_eligible_records = 0
+
+        for record in records:
+
+            direction = record.get(
+                "virtual_trade_direction",
+                "NO_VIRTUAL_TRADE"
+            )
+
+            eligibility = record.get(
+                "hvn_trade_eligibility",
+                "UNKNOWN"
+            )
+
+            if direction != "NO_VIRTUAL_TRADE":
+                virtual_records += 1
+
+            if eligibility == "CONDITIONAL_ELIGIBLE":
+                eligible_records += 1
+
+            elif eligibility == "NOT_ELIGIBLE":
+                not_eligible_records += 1
+
+        coverage_percent = 0
+
+        if total_records > 0:
+
+            coverage_percent = round(
+                (
+                    virtual_records
+                    / total_records
+                ) * 100,
+                2
+            )
+
+        return {
+            "total_records": total_records,
+            "virtual_records": virtual_records,
+            "coverage_percent": coverage_percent,
+            "eligible_records": eligible_records,
+            "not_eligible_records": not_eligible_records
+        }
 
 
 

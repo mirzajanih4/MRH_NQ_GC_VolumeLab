@@ -1306,6 +1306,34 @@ print(
     .build_virtual_outcome_snapshot()
 )
 
+print(
+    "\n----- Virtual Performance Research Snapshot -----"
+)
+
+print(
+    analytics_engine
+    .build_virtual_performance_research_snapshot()
+)
+
+print(
+    "\n----- Virtual Performance Sample Size Report -----"
+)
+
+print(
+    analytics_engine
+    .build_virtual_performance_sample_size_report()
+)
+
+print(
+    "\n----- Virtual Bias Audit -----"
+)
+
+print(
+    analytics_engine
+    .build_virtual_bias_audit()
+)
+
+
 print("\n----- Random Forest Report -----")
 
 print(
