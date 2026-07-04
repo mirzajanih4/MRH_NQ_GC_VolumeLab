@@ -28,6 +28,17 @@ from engines.probability_engine import ProbabilityEngine
 from engines.confidence_engine import ConfidenceEngine
 from engines.footprint_engine import FootprintEngine
 from engines.ml_training_engine import MLTrainingEngine
+# ==========================================
+# STEP126 Runtime / Research Mode
+# ==========================================
+
+RUNTIME_MODE = "RESEARCH"
+
+# Available modes:
+# "RUNTIME"
+# "RESEARCH"
+# "TRAINING"
+
 volume_engine = VolumeEngine()
 replay_engine = ReplayEngine(volume_engine)
 orderflow_engine = OrderflowEngine(volume_engine)
@@ -1442,151 +1453,152 @@ print(
     .build_opportunity_population_validation()
 )
 
+if RUNTIME_MODE in ("RESEARCH", "TRAINING"):
 
-print("\n----- Random Forest Report -----")
+    print("\n----- Random Forest Report -----")
 
-print(
-    ml_training_engine
-    .build_random_forest_report()
-)
+    print(
+        ml_training_engine
+        .build_random_forest_report()
+    )
 
-print("\n----- Random Forest Overfitting Report -----")
+    print("\n----- Random Forest Overfitting Report -----")
 
-print(
-    ml_training_engine
-    .build_random_forest_overfitting_report()
-)
-print("\n----- Feature Importance Report -----")
+    print(
+        ml_training_engine
+        .build_random_forest_overfitting_report()
+    )
+    print("\n----- Feature Importance Report -----")
 
-print(
-    ml_training_engine
-    .build_feature_importance_report()
-)
+    print(
+        ml_training_engine
+        .build_feature_importance_report()
+    )
 
-print("\n----- ML Candidate Feature Audit -----")
+    print("\n----- ML Candidate Feature Audit -----")
 
-print(
-    ml_training_engine
-    .build_ml_candidate_feature_audit()
-)
+    print(
+        ml_training_engine
+        .build_ml_candidate_feature_audit()
+    )
 
-print("\n----- ML Feature Activation Gate -----")
+    print("\n----- ML Feature Activation Gate -----")
 
-print(
-    ml_training_engine
-    .build_ml_feature_activation_gate()
-)
+    print(
+        ml_training_engine
+        .build_ml_feature_activation_gate()
+    )
 
-print("\n----- Dynamic ML Feature Set Report -----")
+    print("\n----- Dynamic ML Feature Set Report -----")
 
-print(
-    ml_training_engine
-    .build_dynamic_ml_feature_set_report()
-)
+    print(
+        ml_training_engine
+        .build_dynamic_ml_feature_set_report()
+    )
 
-print("\n----- Dynamic Encoded Feature Matrix Report -----")
+    print("\n----- Dynamic Encoded Feature Matrix Report -----")
 
-print(
-    ml_training_engine
-    .build_dynamic_encoded_feature_matrix_report()
-)
+    print(
+        ml_training_engine
+        .build_dynamic_encoded_feature_matrix_report()
+    )
 
-print("\n----- Dynamic ML Train/Test Readiness Report -----")
+    print("\n----- Dynamic ML Train/Test Readiness Report -----")
 
-print(
-    ml_training_engine
-    .build_dynamic_ml_train_test_readiness_report()
-)
-
-
-print("\n----- Confidence Dependency Audit -----")
-
-print(
-    ml_training_engine.build_confidence_dependency_audit()
-)
-
-print("\n----- Signal Independence Map -----")
-
-print(
-    ml_training_engine
-    .build_signal_independence_map()
-)
-
-print("\n----- Feature Purification Report -----")
-
-print(
-    ml_training_engine
-    .build_feature_purification_report()
-)
-
-print("\n----- Footprint Signal Diagnostic Report -----")
-
-print(
-    ml_training_engine
-    .build_footprint_signal_diagnostic_report()
-)
+    print(
+        ml_training_engine
+        .build_dynamic_ml_train_test_readiness_report()
+    )
 
 
-print("\n----- CORE V2 Dependency Safety Audit -----")
+    print("\n----- Confidence Dependency Audit -----")
 
-print(
-    ml_training_engine
-    .build_core_v2_dependency_safety_audit()
-)
+    print(
+        ml_training_engine.build_confidence_dependency_audit()
+    )
 
-print("\n----- Feature Expansion Benchmark -----")
+    print("\n----- Signal Independence Map -----")
 
-print(
-    ml_training_engine
-    .build_feature_expansion_benchmark()
-)
+    print(
+        ml_training_engine
+        .build_signal_independence_map()
+    )
 
-print("\n----- Feature Interaction Benchmark -----")
+    print("\n----- Feature Purification Report -----")
 
-print(
-    ml_training_engine
-    .build_feature_interaction_benchmark()
-)
+    print(
+        ml_training_engine
+        .build_feature_purification_report()
+    )
 
-print(
-    ml_training_engine
-    .build_random_forest_overfitting_report()
-)
+    print("\n----- Footprint Signal Diagnostic Report -----")
 
-print("\n----- Probability Model Snapshot -----")
+    print(
+        ml_training_engine
+        .build_footprint_signal_diagnostic_report()
+    )
 
-probability_model_snapshot = (
-    probability_engine.build_probability_model_snapshot()
-)
 
-print(probability_model_snapshot)
-probability_model_file = "data/probability_model_snapshot.csv"
+    print("\n----- CORE V2 Dependency Safety Audit -----")
 
-with open(
-        probability_model_file,
-        mode="w",
-        newline=""
-) as file:
+    print(
+        ml_training_engine
+        .build_core_v2_dependency_safety_audit()
+    )
 
-    writer = csv.writer(file)
+    print("\n----- Feature Expansion Benchmark -----")
 
-    writer.writerow([
-        "feature",
-        "value",
-        "probability"
-    ])
+    print(
+        ml_training_engine
+        .build_feature_expansion_benchmark()
+    )
 
-    for feature_name, values in probability_model_snapshot.items():
+    print("\n----- Feature Interaction Benchmark -----")
 
-        for value_name, probability in values.items():
+    print(
+        ml_training_engine
+        .build_feature_interaction_benchmark()
+    )
 
-            writer.writerow([
-                feature_name,
-                value_name,
-                probability
-            ])
+    print(
+        ml_training_engine
+        .build_random_forest_overfitting_report()
+    )
 
-print("Probability Model Snapshot saved.")
+    print("\n----- Probability Model Snapshot -----")
+
+    probability_model_snapshot = (
+        probability_engine.build_probability_model_snapshot()
+    )
+
+    print(probability_model_snapshot)
+    probability_model_file = "data/probability_model_snapshot.csv"
+
+    with open(
+            probability_model_file,
+            mode="w",
+            newline=""
+    ) as file:
+
+        writer = csv.writer(file)
+
+        writer.writerow([
+            "feature",
+            "value",
+            "probability"
+        ])
+
+        for feature_name, values in probability_model_snapshot.items():
+
+            for value_name, probability in values.items():
+
+                writer.writerow([
+                    feature_name,
+                    value_name,
+                    probability
+                ])
+
+    print("Probability Model Snapshot saved.")
 
 for scenario in scenario_list:
 
