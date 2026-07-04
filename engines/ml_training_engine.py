@@ -2522,6 +2522,352 @@ class MLTrainingEngine:
             "report": report
         }
 
+    def build_ml_candidate_feature_audit(self):
+
+        records = self.load_dataset()
+
+        candidate_features = [
+            "hvn_context",
+            "hvn_trade_eligibility",
+            "virtual_trade_direction",
+            "virtual_trade_outcome",
+            "virtual_opportunity_score",
+            "virtual_opportunity_grade",
+            "virtual_edge_score",
+            "virtual_edge_label"
+        ]
+
+        report = {}
+
+        total_records = len(records)
+
+        for feature in candidate_features:
+
+            values = []
+
+            missing = 0
+
+            for row in records:
+
+                value = row.get(feature)
+
+                if (
+                        value is None
+                        or value == ""
+                ):
+                    missing += 1
+
+                else:
+                    values.append(str(value))
+
+            unique_values = len(set(values))
+
+            coverage = 0
+
+            if total_records > 0:
+
+                coverage = round(
+                    (
+                        (total_records - missing)
+                        / total_records
+                    ) * 100,
+                    2
+                )
+
+            if coverage >= 95 and unique_values >= 3:
+
+                status = "READY"
+
+            elif coverage >= 50:
+
+                status = "COLLECT_MORE_DATA"
+
+            else:
+
+                status = "NOT_READY"
+
+            report[feature] = {
+
+                "unique_values":
+                    unique_values,
+
+                "coverage_percent":
+                    coverage,
+
+                "missing_records":
+                    missing,
+
+                "status":
+                    status
+            }
+
+        return report
+
+    def build_ml_feature_activation_gate(self):
+
+        audit = self.build_ml_candidate_feature_audit()
+
+        report = {
+            "ml_ready": [],
+            "collect_more_data": [],
+            "excluded": []
+        }
+
+        for feature, data in audit.items():
+
+            status = data["status"]
+
+            if status == "READY":
+
+                report["ml_ready"].append(feature)
+
+            elif status == "COLLECT_MORE_DATA":
+
+                report["collect_more_data"].append(feature)
+
+            else:
+
+                report["excluded"].append(feature)
+
+        return report
+
+    def get_dynamic_ml_feature_columns(self):
+
+        base_features = [
+            "setup_type",
+            "setup_grade",
+            "confidence_score",
+            "footprint_score",
+            "stack_strength"
+        ]
+
+        activation_gate = (
+            self.build_ml_feature_activation_gate()
+        )
+
+        dynamic_features = (
+            activation_gate["ml_ready"]
+        )
+
+        return (
+            base_features
+            + dynamic_features
+        )
+
+    def build_dynamic_ml_feature_set_report(self):
+
+        features = (
+            self.get_dynamic_ml_feature_columns()
+        )
+
+        activation_gate = (
+            self.build_ml_feature_activation_gate()
+        )
+
+        return {
+            "feature_set": "DYNAMIC_ML_FEATURE_SET_V1",
+            "base_feature_count": 5,
+            "dynamic_feature_count":
+                len(activation_gate["ml_ready"]),
+            "total_feature_count":
+                len(features),
+            "features": features,
+            "excluded_features":
+                activation_gate["excluded"],
+            "collect_more_data":
+                activation_gate["collect_more_data"]
+        }
+
+    def encode_dynamic_ml_feature_row(self, row):
+
+        encoded_row = {}
+
+        dynamic_columns = (
+            self.get_dynamic_ml_feature_columns()
+        )
+
+        if "setup_type" in dynamic_columns:
+
+            setup_type = row.get("setup_type")
+
+            for category in self.get_setup_type_categories():
+
+                encoded_row[
+                    "setup_type_" + category
+                ] = int(setup_type == category)
+
+        if "setup_grade" in dynamic_columns:
+
+            encoded_row["setup_grade"] = {
+                "A_SETUP": 2,
+                "B_SETUP": 1,
+                "C_SETUP": 0
+            }.get(row.get("setup_grade"), 0)
+
+        if "confidence_score" in dynamic_columns:
+
+            try:
+                encoded_row["confidence_score"] = float(
+                    row.get("confidence_score", 0)
+                )
+
+            except (
+                    TypeError,
+                    ValueError
+            ):
+                encoded_row["confidence_score"] = 0.0
+
+        if "footprint_score" in dynamic_columns:
+
+            try:
+                encoded_row["footprint_score"] = float(
+                    row.get("footprint_score", 0)
+                )
+
+            except (
+                    TypeError,
+                    ValueError
+            ):
+                encoded_row["footprint_score"] = 0.0
+
+        if "stack_strength" in dynamic_columns:
+
+            encoded_row["stack_strength"] = {
+                "HIGH": 3,
+                "MEDIUM": 2,
+                "LOW": 1,
+                "NONE": 0
+            }.get(row.get("stack_strength"), 0)
+
+        if "hvn_context" in dynamic_columns:
+
+            hvn_context = row.get("hvn_context")
+
+            for context in (
+                    "NOT_HVN",
+                    "HVN_BREAKOUT_PRESSURE",
+                    "HVN_REJECTION_ZONE",
+                    "HVN_ACCEPTANCE_ZONE"
+            ):
+
+                encoded_row[
+                    "hvn_context_" + context
+                ] = int(hvn_context == context)
+
+        if "virtual_trade_direction" in dynamic_columns:
+
+            direction = row.get("virtual_trade_direction")
+
+            for trade_direction in (
+                    "NO_VIRTUAL_TRADE",
+                    "VIRTUAL_LONG",
+                    "VIRTUAL_SHORT"
+            ):
+
+                encoded_row[
+                    "virtual_trade_direction_" + trade_direction
+                ] = int(direction == trade_direction)
+
+        return encoded_row
+
+    def build_dynamic_encoded_feature_matrix(self):
+
+        records = self.load_dataset()
+
+        prepared_rows = (
+            self.prepare_training_dataset(records)
+        )
+
+        matrix = []
+
+        for row in prepared_rows:
+
+            matrix.append(
+                self.encode_dynamic_ml_feature_row(row)
+            )
+
+        return matrix
+
+    def build_dynamic_encoded_feature_matrix_report(self):
+
+        matrix = (
+            self.build_dynamic_encoded_feature_matrix()
+        )
+
+        text_columns = []
+
+        feature_count = 0
+
+        if len(matrix) > 0:
+
+            feature_count = len(matrix[0])
+
+            for column, value in matrix[0].items():
+
+                if isinstance(value, str):
+                    text_columns.append(column)
+
+        return {
+            "feature_set": "DYNAMIC_ENCODED_FEATURE_MATRIX_V1",
+            "rows": len(matrix),
+            "encoded_feature_count": feature_count,
+            "text_columns_remaining": text_columns,
+            "fully_numeric": len(text_columns) == 0
+        }
+
+    def build_dynamic_ml_train_test_readiness_report(self):
+
+        feature_matrix = (
+            self.build_dynamic_encoded_feature_matrix()
+        )
+
+        target_vector = (
+            self.build_encoded_target_vector()
+        )
+
+        wins = sum(
+            1 for target in target_vector
+            if target == 1
+        )
+
+        losses = sum(
+            1 for target in target_vector
+            if target == 0
+        )
+
+        shape_valid = (
+            len(feature_matrix) == len(target_vector)
+        )
+
+        has_both_classes = (
+            wins > 0
+            and losses > 0
+        )
+
+        enough_samples = (
+            len(feature_matrix) >= 50
+        )
+
+        ready = (
+            shape_valid
+            and has_both_classes
+            and enough_samples
+        )
+
+        return {
+            "feature_set": "DYNAMIC_ML_FEATURE_SET_V1",
+            "feature_rows": len(feature_matrix),
+            "target_rows": len(target_vector),
+            "wins": wins,
+            "losses": losses,
+            "shape_valid": shape_valid,
+            "has_both_classes": has_both_classes,
+            "enough_samples": enough_samples,
+            "dynamic_ml_ready": ready
+        }
+
+
+
 
 
 

@@ -1463,6 +1463,42 @@ print(
     .build_feature_importance_report()
 )
 
+print("\n----- ML Candidate Feature Audit -----")
+
+print(
+    ml_training_engine
+    .build_ml_candidate_feature_audit()
+)
+
+print("\n----- ML Feature Activation Gate -----")
+
+print(
+    ml_training_engine
+    .build_ml_feature_activation_gate()
+)
+
+print("\n----- Dynamic ML Feature Set Report -----")
+
+print(
+    ml_training_engine
+    .build_dynamic_ml_feature_set_report()
+)
+
+print("\n----- Dynamic Encoded Feature Matrix Report -----")
+
+print(
+    ml_training_engine
+    .build_dynamic_encoded_feature_matrix_report()
+)
+
+print("\n----- Dynamic ML Train/Test Readiness Report -----")
+
+print(
+    ml_training_engine
+    .build_dynamic_ml_train_test_readiness_report()
+)
+
+
 print("\n----- Confidence Dependency Audit -----")
 
 print(
