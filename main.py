@@ -39,6 +39,9 @@ RUNTIME_MODE = "RESEARCH"
 # "RESEARCH"
 # "TRAINING"
 
+SHOW_RUNTIME_DETAILS = True
+
+
 volume_engine = VolumeEngine()
 replay_engine = ReplayEngine(volume_engine)
 orderflow_engine = OrderflowEngine(volume_engine)
@@ -239,16 +242,22 @@ def run_scenario(scenario):
 
     replay_engine.replay_ticks(ticks, use_delay=False)
     footprint_data = footprint_engine.analyze_footprint(ticks)
-    print("----- Footprint Data -----")
-    print(footprint_data)
-    volume_engine.show_status()
-    orderflow_engine.show_signals()
-    nq_strategy.show_decision(risk_engine)
 
-    risk_engine.show_risk_status(
-        orderflow_engine.calculate_score(),
-        session_engine.detect_session()
-    )
+    if SHOW_RUNTIME_DETAILS:
+        print("----- Footprint Data -----")
+        print(footprint_data)
+
+        volume_engine.show_status()
+
+        orderflow_engine.show_signals()
+
+        nq_strategy.show_decision(risk_engine)
+
+        risk_engine.show_risk_status(
+            orderflow_engine.calculate_score(),
+            session_engine.detect_session()
+        )
+
     strategy_reason = nq_strategy.get_strategy_block_reason()
 
     risk_reason = risk_engine.get_block_reason(
