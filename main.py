@@ -41,6 +41,39 @@ RUNTIME_MODE = "RESEARCH"
 
 SHOW_RUNTIME_DETAILS = True
 
+def build_runtime_readiness_report():
+
+    runtime_ready = (
+        RUNTIME_MODE == "RUNTIME"
+        and not SHOW_RUNTIME_DETAILS
+    )
+
+    runtime_status = (
+        "PASS"
+        if runtime_ready
+        else "NOT_READY"
+    )
+
+    return {
+        "step": "STEP128",
+        "runtime_mode": RUNTIME_MODE,
+        "show_runtime_details": SHOW_RUNTIME_DETAILS,
+
+        "research_reports_enabled": (
+            RUNTIME_MODE in (
+                "RESEARCH",
+                "TRAINING"
+            )
+        ),
+
+        "runtime_details_enabled": SHOW_RUNTIME_DETAILS,
+
+        "demo_runtime_candidate": runtime_ready,
+
+        "runtime_ready": runtime_ready,
+
+        "runtime_status": runtime_status
+    }
 
 volume_engine = VolumeEngine()
 replay_engine = ReplayEngine(volume_engine)
@@ -1462,11 +1495,18 @@ print(
     .build_opportunity_population_validation()
 )
 
+print("\n----- STEP128 Runtime Readiness Report -----")
+
+print(
+    build_runtime_readiness_report()
+)
+
 if RUNTIME_MODE in ("RESEARCH", "TRAINING"):
 
     print("\n----- Random Forest Report -----")
 
     print(
+
         ml_training_engine
         .build_random_forest_report()
     )
@@ -1573,6 +1613,9 @@ if RUNTIME_MODE in ("RESEARCH", "TRAINING"):
         ml_training_engine
         .build_random_forest_overfitting_report()
     )
+
+
+
 
     print("\n----- Probability Model Snapshot -----")
 
