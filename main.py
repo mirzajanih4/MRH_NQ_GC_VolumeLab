@@ -75,6 +75,121 @@ def build_runtime_readiness_report():
         "runtime_status": runtime_status
     }
 
+
+def build_dataset_quality_report(analytics_engine):
+
+    label_counts = analytics_engine.count_by_field(
+        "trade_label"
+    )
+
+    scenario_counts = analytics_engine.count_by_field(
+        "scenario"
+    )
+
+    total_records = sum(
+        label_counts.values()
+    )
+
+    tradable_records = (
+        label_counts.get("WIN", 0)
+        + label_counts.get("LOSS", 0)
+    )
+
+    target_records = 350
+
+    sample_size_progress = round(
+        min(
+            tradable_records / target_records,
+            1.0
+        ) * 100,
+        2
+    )
+
+    raw_sample_size_ready = (
+        tradable_records >= target_records
+    )
+
+    unique_scenarios = len(
+        scenario_counts
+    )
+
+    max_scenario_repetition = (
+        max(scenario_counts.values())
+        if scenario_counts
+        else 0
+    )
+
+    scenario_repetition_risk = (
+        max_scenario_repetition > 1
+    )
+
+    if scenario_repetition_risk:
+        dataset_quality_status = (
+            "SCENARIO_REPETITION_AUDIT_REQUIRED"
+        )
+
+    elif raw_sample_size_ready:
+        dataset_quality_status = (
+            "RAW_SAMPLE_SIZE_READY"
+        )
+
+    else:
+        dataset_quality_status = (
+            "INSUFFICIENT_SAMPLE_SIZE"
+        )
+
+    if scenario_repetition_risk:
+        dataset_quality_score = 50.0
+
+    else:
+        dataset_quality_score = sample_size_progress
+
+    setup_type_count = len(
+        analytics_engine.count_by_field(
+            "setup_type"
+        )
+    )
+
+    session_count = len(
+        analytics_engine.count_by_field(
+            "session"
+        )
+    )
+
+    market_phase_count = len(
+        analytics_engine.count_by_field(
+            "market_phase"
+        )
+    )
+
+    return {
+        "step": "STEP129",
+        "total_records": total_records,
+        "tradable_records": tradable_records,
+        "target_records": target_records,
+        "sample_size_progress_percent":
+            sample_size_progress,
+        "raw_sample_size_ready":
+            raw_sample_size_ready,
+        "unique_scenarios":
+            unique_scenarios,
+        "max_scenario_repetition":
+            max_scenario_repetition,
+        "scenario_repetition_risk":
+            scenario_repetition_risk,
+        "setup_type_count":
+            setup_type_count,
+        "session_count":
+            session_count,
+        "market_phase_count":
+            market_phase_count,
+        "dataset_quality_score":
+            dataset_quality_score,
+        "dataset_quality_status":
+            dataset_quality_status
+    }
+
+
 volume_engine = VolumeEngine()
 replay_engine = ReplayEngine(volume_engine)
 orderflow_engine = OrderflowEngine(volume_engine)
@@ -1499,6 +1614,14 @@ print("\n----- STEP128 Runtime Readiness Report -----")
 
 print(
     build_runtime_readiness_report()
+)
+
+print("\n----- STEP129 Dataset Quality Report -----")
+
+print(
+    build_dataset_quality_report(
+        analytics_engine
+    )
 )
 
 if RUNTIME_MODE in ("RESEARCH", "TRAINING"):
