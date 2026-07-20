@@ -162,6 +162,51 @@ def build_dataset_quality_report(analytics_engine):
         )
     )
 
+    scenario_distribution = (
+        analytics_engine.count_by_field(
+            "scenario"
+        )
+    )
+
+    scenario_counts_list = list(
+        scenario_distribution.values()
+    )
+
+    scenario_balance_pass = (
+        len(set(scenario_counts_list)) == 1
+        if scenario_counts_list
+        else False
+    )
+
+    scenario_independence_pass = (
+            max_scenario_repetition == 1
+    )
+
+    runtime_dataset_separation_required = (
+            scenario_balance_pass
+            and not scenario_independence_pass
+    )
+    runtime_dataset_ready = (
+            scenario_independence_pass
+            and raw_sample_size_ready
+    )
+
+    runtime_dataset_status = (
+        "READY"
+        if runtime_dataset_ready
+        else "NOT_READY"
+    )
+
+    research_dataset_only = (
+        not runtime_dataset_ready
+    )
+
+    dataset_training_permission = (
+        "RESEARCH_ONLY"
+        if research_dataset_only
+        else "RUNTIME_ALLOWED"
+    )
+
     return {
         "step": "STEP129",
         "total_records": total_records,
@@ -175,6 +220,28 @@ def build_dataset_quality_report(analytics_engine):
             unique_scenarios,
         "max_scenario_repetition":
             max_scenario_repetition,
+        "scenario_distribution":
+            scenario_distribution,
+        "scenario_balance_pass":
+            scenario_balance_pass,
+
+        "scenario_independence_pass":
+            scenario_independence_pass,
+
+        "runtime_dataset_separation_required":
+            runtime_dataset_separation_required,
+        "runtime_dataset_ready":
+            runtime_dataset_ready,
+
+        "runtime_dataset_status":
+            runtime_dataset_status,
+
+        "research_dataset_only":
+            research_dataset_only,
+
+        "dataset_training_permission":
+            dataset_training_permission,
+
         "scenario_repetition_risk":
             scenario_repetition_risk,
         "setup_type_count":
@@ -1623,6 +1690,16 @@ print(
         analytics_engine
     )
 )
+
+print("\n----- Scenario Distribution -----")
+
+for scenario, count in (
+    build_dataset_quality_report(
+        analytics_engine
+    )["scenario_distribution"].items()
+):
+    print(f"{scenario}: {count}")
+
 
 if RUNTIME_MODE in ("RESEARCH", "TRAINING"):
 
