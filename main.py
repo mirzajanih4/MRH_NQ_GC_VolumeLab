@@ -256,6 +256,25 @@ def build_dataset_quality_report(analytics_engine):
             dataset_quality_status
     }
 
+def classify_dataset_record_source(scenario):
+
+    runtime_candidate = False
+
+    dataset_record_class = "RESEARCH_RECORD"
+
+    dataset_record_reason = (
+        "SYNTHETIC_OR_REPEATED_SCENARIO"
+    )
+
+    return {
+        "scenario": scenario,
+        "runtime_candidate": runtime_candidate,
+        "dataset_record_class":
+            dataset_record_class,
+        "dataset_record_reason":
+            dataset_record_reason
+    }
+
 
 volume_engine = VolumeEngine()
 replay_engine = ReplayEngine(volume_engine)
@@ -771,9 +790,29 @@ def run_scenario(scenario):
     elif edge_score >= 0:
         edge_label = "WEAK_EDGE"
 
+    record_source_classification = (
+        classify_dataset_record_source(
+            scenario
+        )
+    )
 
     dataset_record = {
         "scenario": scenario,
+        "runtime_candidate":
+            record_source_classification[
+                "runtime_candidate"
+            ],
+
+        "dataset_record_class":
+            record_source_classification[
+                "dataset_record_class"
+            ],
+
+        "dataset_record_reason":
+            record_source_classification[
+                "dataset_record_reason"
+            ],
+
         "final_signal": nq_strategy.get_final_signal(risk_engine),
         "trade_outcome": trade_outcome,
         "trade_label": trade_label,
