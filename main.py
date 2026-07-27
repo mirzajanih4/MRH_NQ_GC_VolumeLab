@@ -275,6 +275,31 @@ def classify_dataset_record_source(scenario):
             dataset_record_reason
     }
 
+def qualify_runtime_candidate(record):
+
+    source_independence_pass = (
+        record.get(
+            "dataset_record_class"
+        ) != "RESEARCH_RECORD"
+        and record.get(
+            "dataset_record_reason"
+        ) != "SYNTHETIC_OR_REPEATED_SCENARIO"
+    )
+
+    if not source_independence_pass:
+        return {
+            "qualified": False,
+            "qualification_score": 0,
+            "qualification_reason":
+                "SOURCE_NOT_INDEPENDENT"
+        }
+
+    return {
+        "qualified": False,
+        "qualification_score": 25,
+        "qualification_reason":
+            "SOURCE_INDEPENDENCE_PASS"
+    }
 
 volume_engine = VolumeEngine()
 replay_engine = ReplayEngine(volume_engine)
@@ -796,6 +821,12 @@ def run_scenario(scenario):
         )
     )
 
+    qualification_result = (
+        qualify_runtime_candidate(
+            record_source_classification
+        )
+    )
+
     dataset_record = {
         "scenario": scenario,
         "runtime_candidate":
@@ -811,6 +842,21 @@ def run_scenario(scenario):
         "dataset_record_reason":
             record_source_classification[
                 "dataset_record_reason"
+            ],
+
+        "qualified":
+            qualification_result[
+                "qualified"
+            ],
+
+        "qualification_score":
+            qualification_result[
+                "qualification_score"
+            ],
+
+        "qualification_reason":
+            qualification_result[
+                "qualification_reason"
             ],
 
         "final_signal": nq_strategy.get_final_signal(risk_engine),
