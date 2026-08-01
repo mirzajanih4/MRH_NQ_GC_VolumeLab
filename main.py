@@ -301,6 +301,90 @@ def qualify_runtime_candidate(record):
             "SOURCE_INDEPENDENCE_PASS"
     }
 
+def evaluate_dataset_quality_rule(
+        dataset_quality_report
+):
+
+    dataset_quality_score = (
+        dataset_quality_report.get(
+            "dataset_quality_score",
+            0
+        )
+    )
+
+    dataset_quality_status = (
+        dataset_quality_report.get(
+            "dataset_quality_status",
+            "NOT_EVALUATED"
+        )
+    )
+
+    dataset_quality_pass = (
+        dataset_quality_score >= 70
+        and dataset_quality_status
+        not in (
+            "SCENARIO_REPETITION_AUDIT_REQUIRED",
+            "INSUFFICIENT_SAMPLE_SIZE",
+            "NOT_EVALUATED"
+        )
+    )
+
+    return {
+        "dataset_quality_pass":
+            dataset_quality_pass,
+
+        "dataset_quality_rule_score":
+            20
+            if dataset_quality_pass
+            else 0,
+
+        "dataset_quality_rule_reason":
+            (
+                "DATASET_QUALITY_PASS"
+                if dataset_quality_pass
+                else "DATASET_QUALITY_FAIL"
+            )
+    }
+
+def aggregate_qualification_rules(
+        source_rule_result,
+        dataset_quality_rule_result
+):
+
+    source_score = (
+        source_rule_result.get(
+            "score",
+            0
+        )
+    )
+
+    dataset_quality_score = (
+        dataset_quality_rule_result.get(
+            "dataset_quality_rule_score",
+            0
+        )
+    )
+
+    qualification_score = (
+        source_score
+        + dataset_quality_score
+    )
+
+    qualified = False
+
+    qualification_reason = (
+        "QUALIFICATION_INCOMPLETE"
+    )
+
+    return {
+        "qualified": qualified,
+        "qualification_score":
+            qualification_score,
+        "qualification_reason":
+            qualification_reason
+    }
+
+
 volume_engine = VolumeEngine()
 replay_engine = ReplayEngine(volume_engine)
 orderflow_engine = OrderflowEngine(volume_engine)
@@ -496,6 +580,18 @@ def run_scenario(scenario):
     confidence_engine = ConfidenceEngine()
     analytics_engine = AnalyticsEngine("data/replay_results.csv")
     probability_engine = ProbabilityEngine(analytics_engine)
+
+    dataset_quality_report = (
+        build_dataset_quality_report(
+            analytics_engine
+        )
+    )
+
+    dataset_quality_rule_result = (
+        evaluate_dataset_quality_rule(
+            dataset_quality_report
+        )
+    )
 
     ticks = get_ticks_by_scenario(scenario)
 
@@ -827,6 +923,31 @@ def run_scenario(scenario):
         )
     )
 
+    source_rule_result = {
+        "passed":
+            qualification_result[
+                "qualified"
+            ],
+
+        "score":
+            qualification_result[
+                "qualification_score"
+            ],
+
+        "reason":
+            qualification_result[
+                "qualification_reason"
+            ]
+    }
+
+    aggregated_qualification_result = (
+        aggregate_qualification_rules(
+            source_rule_result,
+            dataset_quality_rule_result
+        )
+    )
+
+
     dataset_record = {
         "scenario": scenario,
         "runtime_candidate":
@@ -857,6 +978,36 @@ def run_scenario(scenario):
         "qualification_reason":
             qualification_result[
                 "qualification_reason"
+            ],
+
+        "aggregated_qualified":
+            aggregated_qualification_result[
+                "qualified"
+            ],
+
+        "aggregated_qualification_score":
+            aggregated_qualification_result[
+                "qualification_score"
+            ],
+
+        "aggregated_qualification_reason":
+            aggregated_qualification_result[
+                "qualification_reason"
+            ],
+
+        "dataset_quality_pass":
+            dataset_quality_rule_result[
+                "dataset_quality_pass"
+            ],
+
+        "dataset_quality_rule_score":
+            dataset_quality_rule_result[
+                "dataset_quality_rule_score"
+            ],
+
+        "dataset_quality_rule_reason":
+            dataset_quality_rule_result[
+                "dataset_quality_rule_reason"
             ],
 
         "final_signal": nq_strategy.get_final_signal(risk_engine),
@@ -1775,6 +1926,48 @@ print(
         analytics_engine
     )
 )
+
+dataset_quality_report = (
+    build_dataset_quality_report(
+        analytics_engine
+    )
+)
+
+dataset_quality_rule_result = (
+    evaluate_dataset_quality_rule(
+        dataset_quality_report
+    )
+)
+
+print(
+    "\n----- STEP133 Dataset Quality Rule Test -----"
+)
+
+print(
+    dataset_quality_rule_result
+)
+
+source_rule_test_result = {
+    "passed": False,
+    "score": 0,
+    "reason": "SOURCE_NOT_INDEPENDENT"
+}
+
+qualification_aggregator_test = (
+    aggregate_qualification_rules(
+        source_rule_test_result,
+        dataset_quality_rule_result
+    )
+)
+
+print(
+    "\n----- STEP133 Qualification Aggregator Test -----"
+)
+
+print(
+    qualification_aggregator_test
+)
+
 
 print("\n----- Scenario Distribution -----")
 
