@@ -346,9 +346,35 @@ def evaluate_dataset_quality_rule(
             )
     }
 
+def evaluate_confidence_quality_rule(
+        confidence_score
+):
+
+    confidence_quality_pass = (
+        confidence_score >= 70
+    )
+
+    return {
+        "confidence_quality_pass":
+            confidence_quality_pass,
+
+        "confidence_quality_rule_score":
+            15
+            if confidence_quality_pass
+            else 0,
+
+        "confidence_quality_rule_reason":
+            (
+                "CONFIDENCE_QUALITY_PASS"
+                if confidence_quality_pass
+                else "CONFIDENCE_QUALITY_FAIL"
+            )
+    }
+
 def aggregate_qualification_rules(
         source_rule_result,
-        dataset_quality_rule_result
+        dataset_quality_rule_result,
+        confidence_rule_result
 ):
 
     source_score = (
@@ -365,9 +391,17 @@ def aggregate_qualification_rules(
         )
     )
 
+    confidence_quality_score = (
+        confidence_rule_result.get(
+            "confidence_quality_rule_score",
+            0
+        )
+    )
+
     qualification_score = (
         source_score
         + dataset_quality_score
+        + confidence_quality_score
     )
 
     qualified = False
@@ -593,6 +627,8 @@ def run_scenario(scenario):
         )
     )
 
+
+
     ticks = get_ticks_by_scenario(scenario)
 
     replay_engine.replay_ticks(ticks, use_delay=False)
@@ -799,6 +835,13 @@ def run_scenario(scenario):
         footprint_data["footprint_score"],
         footprint_data["stack_strength"]
     )
+
+    confidence_rule_result = (
+        evaluate_confidence_quality_rule(
+            confidence_score
+        )
+    )
+
     # STEP 102.2 - Trade quality decorrelation
     if setup_grade == "A_SETUP" and footprint_data["footprint_score"] >= 1.0:
         trade_quality = "HIGH_QUALITY"
@@ -943,7 +986,8 @@ def run_scenario(scenario):
     aggregated_qualification_result = (
         aggregate_qualification_rules(
             source_rule_result,
-            dataset_quality_rule_result
+            dataset_quality_rule_result,
+            confidence_rule_result
         )
     )
 
@@ -1008,6 +1052,21 @@ def run_scenario(scenario):
         "dataset_quality_rule_reason":
             dataset_quality_rule_result[
                 "dataset_quality_rule_reason"
+            ],
+
+        "confidence_quality_pass":
+            confidence_rule_result[
+                "confidence_quality_pass"
+            ],
+
+        "confidence_quality_rule_score":
+            confidence_rule_result[
+                "confidence_quality_rule_score"
+            ],
+
+        "confidence_quality_rule_reason":
+            confidence_rule_result[
+                "confidence_quality_rule_reason"
             ],
 
         "final_signal": nq_strategy.get_final_signal(risk_engine),
@@ -1953,10 +2012,23 @@ source_rule_test_result = {
     "reason": "SOURCE_NOT_INDEPENDENT"
 }
 
+confidence_rule_pass_test = (
+    evaluate_confidence_quality_rule(
+        80.0
+    )
+)
+
+confidence_rule_fail_test = (
+    evaluate_confidence_quality_rule(
+        52.5
+    )
+)
+
 qualification_aggregator_test = (
     aggregate_qualification_rules(
         source_rule_test_result,
-        dataset_quality_rule_result
+        dataset_quality_rule_result,
+        confidence_rule_pass_test
     )
 )
 
@@ -1968,6 +2040,21 @@ print(
     qualification_aggregator_test
 )
 
+print(
+    "\n----- STEP134 Confidence Rule PASS Test -----"
+)
+
+print(
+    confidence_rule_pass_test
+)
+
+print(
+    "\n----- STEP134 Confidence Rule FAIL Test -----"
+)
+
+print(
+    confidence_rule_fail_test
+)
 
 print("\n----- Scenario Distribution -----")
 
