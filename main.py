@@ -371,10 +371,37 @@ def evaluate_confidence_quality_rule(
             )
     }
 
+def evaluate_virtual_outcome_rule(
+        virtual_trade_outcome
+):
+
+    virtual_outcome_pass = (
+        virtual_trade_outcome
+        == "VIRTUAL_WIN"
+    )
+
+    return {
+        "virtual_outcome_pass":
+            virtual_outcome_pass,
+
+        "virtual_outcome_rule_score":
+            20
+            if virtual_outcome_pass
+            else 0,
+
+        "virtual_outcome_rule_reason":
+            (
+                "VIRTUAL_OUTCOME_PASS"
+                if virtual_outcome_pass
+                else "VIRTUAL_OUTCOME_FAIL"
+            )
+    }
+
 def aggregate_qualification_rules(
         source_rule_result,
         dataset_quality_rule_result,
-        confidence_rule_result
+        confidence_rule_result,
+        virtual_outcome_rule_result
 ):
 
     source_score = (
@@ -398,10 +425,18 @@ def aggregate_qualification_rules(
         )
     )
 
+    virtual_outcome_score = (
+        virtual_outcome_rule_result.get(
+            "virtual_outcome_rule_score",
+            0
+        )
+    )
+
     qualification_score = (
         source_score
         + dataset_quality_score
         + confidence_quality_score
+        + virtual_outcome_score
     )
 
     qualified = False
@@ -417,7 +452,6 @@ def aggregate_qualification_rules(
         "qualification_reason":
             qualification_reason
     }
-
 
 volume_engine = VolumeEngine()
 replay_engine = ReplayEngine(volume_engine)
@@ -884,6 +918,12 @@ def run_scenario(scenario):
         else:
             virtual_trade_outcome = "VIRTUAL_LOSS"
 
+    virtual_outcome_rule_result = (
+        evaluate_virtual_outcome_rule(
+            virtual_trade_outcome
+        )
+    )
+
     virtual_opportunity_score = 0
 
     if hvn_trade_eligibility == "CONDITIONAL_ELIGIBLE":
@@ -987,7 +1027,8 @@ def run_scenario(scenario):
         aggregate_qualification_rules(
             source_rule_result,
             dataset_quality_rule_result,
-            confidence_rule_result
+            confidence_rule_result,
+            virtual_outcome_rule_result
         )
     )
 
@@ -1067,6 +1108,21 @@ def run_scenario(scenario):
         "confidence_quality_rule_reason":
             confidence_rule_result[
                 "confidence_quality_rule_reason"
+            ],
+
+        "virtual_outcome_pass":
+            virtual_outcome_rule_result[
+                "virtual_outcome_pass"
+            ],
+
+        "virtual_outcome_rule_score":
+            virtual_outcome_rule_result[
+                "virtual_outcome_rule_score"
+            ],
+
+        "virtual_outcome_rule_reason":
+            virtual_outcome_rule_result[
+                "virtual_outcome_rule_reason"
             ],
 
         "final_signal": nq_strategy.get_final_signal(risk_engine),
@@ -2028,8 +2084,56 @@ qualification_aggregator_test = (
     aggregate_qualification_rules(
         source_rule_test_result,
         dataset_quality_rule_result,
-        confidence_rule_pass_test
+        confidence_rule_pass_test,
+        {
+            "virtual_outcome_pass": True,
+            "virtual_outcome_rule_score": 20,
+            "virtual_outcome_rule_reason":
+                "VIRTUAL_OUTCOME_PASS"
+        }
     )
+)
+
+virtual_outcome_pass_test = (
+    evaluate_virtual_outcome_rule(
+        "VIRTUAL_WIN"
+    )
+)
+
+virtual_outcome_loss_test = (
+    evaluate_virtual_outcome_rule(
+        "VIRTUAL_LOSS"
+    )
+)
+
+virtual_outcome_pending_test = (
+    evaluate_virtual_outcome_rule(
+        "PENDING"
+    )
+)
+
+print(
+    "\n----- STEP135 Virtual Outcome PASS Test -----"
+)
+
+print(
+    virtual_outcome_pass_test
+)
+
+print(
+    "\n----- STEP135 Virtual Outcome LOSS Test -----"
+)
+
+print(
+    virtual_outcome_loss_test
+)
+
+print(
+    "\n----- STEP135 Virtual Outcome PENDING Test -----"
+)
+
+print(
+    virtual_outcome_pending_test
 )
 
 print(
