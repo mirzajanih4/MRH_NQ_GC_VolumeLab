@@ -95,6 +95,26 @@ def build_dataset_quality_report(analytics_engine):
         + label_counts.get("LOSS", 0)
     )
 
+    historical_wins = (
+        label_counts.get("WIN", 0)
+    )
+
+    historical_losses = (
+        label_counts.get("LOSS", 0)
+    )
+
+    historical_win_rate = (
+        round(
+            historical_wins
+            / tradable_records
+            * 100,
+            2
+        )
+        if tradable_records > 0
+        else 0.0
+    )
+
+
     target_records = 350
 
     sample_size_progress = round(
@@ -181,10 +201,8 @@ def build_dataset_quality_report(analytics_engine):
     scenario_independence_pass = (
             max_scenario_repetition == 1
     )
-
     runtime_dataset_separation_required = (
-            scenario_balance_pass
-            and not scenario_independence_pass
+        not scenario_independence_pass
     )
     runtime_dataset_ready = (
             scenario_independence_pass
@@ -211,6 +229,15 @@ def build_dataset_quality_report(analytics_engine):
         "step": "STEP129",
         "total_records": total_records,
         "tradable_records": tradable_records,
+        "historical_wins":
+            historical_wins,
+
+        "historical_losses":
+            historical_losses,
+
+        "historical_win_rate":
+            historical_win_rate,
+
         "target_records": target_records,
         "sample_size_progress_percent":
             sample_size_progress,
@@ -397,11 +424,39 @@ def evaluate_virtual_outcome_rule(
             )
     }
 
+def evaluate_historical_reliability_rule(
+        historical_win_rate,
+        runtime_dataset_ready
+):
+
+    historical_reliability_pass = (
+        historical_win_rate >= 55.0
+        and runtime_dataset_ready
+    )
+
+    return {
+        "historical_reliability_pass":
+            historical_reliability_pass,
+
+        "historical_reliability_rule_score":
+            20
+            if historical_reliability_pass
+            else 0,
+
+        "historical_reliability_rule_reason":
+            (
+                "HISTORICAL_RELIABILITY_PASS"
+                if historical_reliability_pass
+                else "HISTORICAL_RELIABILITY_FAIL"
+            )
+    }
+
 def aggregate_qualification_rules(
         source_rule_result,
         dataset_quality_rule_result,
         confidence_rule_result,
-        virtual_outcome_rule_result
+        virtual_outcome_rule_result,
+        historical_reliability_rule_result
 ):
 
     source_score = (
@@ -432,11 +487,19 @@ def aggregate_qualification_rules(
         )
     )
 
+    historical_reliability_score = (
+        historical_reliability_rule_result.get(
+            "historical_reliability_rule_score",
+            0
+        )
+    )
+
     qualification_score = (
         source_score
         + dataset_quality_score
         + confidence_quality_score
         + virtual_outcome_score
+        + historical_reliability_score
     )
 
     qualified = False
@@ -452,6 +515,7 @@ def aggregate_qualification_rules(
         "qualification_reason":
             qualification_reason
     }
+
 
 volume_engine = VolumeEngine()
 replay_engine = ReplayEngine(volume_engine)
@@ -661,6 +725,16 @@ def run_scenario(scenario):
         )
     )
 
+    historical_reliability_rule_result = (
+        evaluate_historical_reliability_rule(
+            dataset_quality_report[
+                "historical_win_rate"
+            ],
+            dataset_quality_report[
+                "runtime_dataset_ready"
+            ]
+        )
+    )
 
 
     ticks = get_ticks_by_scenario(scenario)
@@ -1028,7 +1102,8 @@ def run_scenario(scenario):
             source_rule_result,
             dataset_quality_rule_result,
             confidence_rule_result,
-            virtual_outcome_rule_result
+            virtual_outcome_rule_result,
+            historical_reliability_rule_result
         )
     )
 
@@ -1123,6 +1198,21 @@ def run_scenario(scenario):
         "virtual_outcome_rule_reason":
             virtual_outcome_rule_result[
                 "virtual_outcome_rule_reason"
+            ],
+
+        "historical_reliability_pass":
+            historical_reliability_rule_result[
+                "historical_reliability_pass"
+            ],
+
+        "historical_reliability_rule_score":
+            historical_reliability_rule_result[
+                "historical_reliability_rule_score"
+            ],
+
+        "historical_reliability_rule_reason":
+            historical_reliability_rule_result[
+                "historical_reliability_rule_reason"
             ],
 
         "final_signal": nq_strategy.get_final_signal(risk_engine),
@@ -2090,6 +2180,12 @@ qualification_aggregator_test = (
             "virtual_outcome_rule_score": 20,
             "virtual_outcome_rule_reason":
                 "VIRTUAL_OUTCOME_PASS"
+        },
+        {
+            "historical_reliability_pass": False,
+            "historical_reliability_rule_score": 0,
+            "historical_reliability_rule_reason":
+                "HISTORICAL_RELIABILITY_FAIL"
         }
     )
 )
@@ -2134,6 +2230,51 @@ print(
 
 print(
     virtual_outcome_pending_test
+)
+
+historical_reliability_research_test = (
+    evaluate_historical_reliability_rule(
+        61.89,
+        False
+    )
+)
+
+historical_reliability_pass_test = (
+    evaluate_historical_reliability_rule(
+        61.89,
+        True
+    )
+)
+
+historical_reliability_low_winrate_test = (
+    evaluate_historical_reliability_rule(
+        50.0,
+        True
+    )
+)
+
+print(
+    "\n----- STEP136 Historical Reliability RESEARCH Test -----"
+)
+
+print(
+    historical_reliability_research_test
+)
+
+print(
+    "\n----- STEP136 Historical Reliability PASS Test -----"
+)
+
+print(
+    historical_reliability_pass_test
+)
+
+print(
+    "\n----- STEP136 Historical Reliability LOW WIN RATE Test -----"
+)
+
+print(
+    historical_reliability_low_winrate_test
 )
 
 print(
