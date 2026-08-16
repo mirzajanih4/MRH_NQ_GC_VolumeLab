@@ -1232,17 +1232,38 @@ def run_scenario(scenario):
 
         print("ML Snapshot saved.")
 
-    dataset_saved = save_dataset_record(
-        "data/replay_results.csv",
+    if (
+            dataset_record[
+                "dataset_record_class"
+            ] == "RUNTIME_CANDIDATE"
+    ):
+        dataset_file_path = (
+            "data/runtime_candidate_results.csv"
+        )
 
+    else:
+        dataset_file_path = (
+            "data/replay_results.csv"
+        )
+
+    dataset_saved = save_dataset_record(
+        dataset_file_path,
         dataset_record
     )
 
+
+
     if dataset_saved:
-        print("Dataset record saved.")
+        print(
+            f"Dataset record saved: "
+            f"{dataset_file_path}"
+        )
 
     else:
-        print("Dataset record NOT saved due to schema mismatch.")
+        print(
+            "Dataset record NOT saved "
+            "due to schema mismatch."
+        )
 
 
 for scenario in scenario_list:
