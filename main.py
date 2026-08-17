@@ -28,6 +28,7 @@ from engines.probability_engine import ProbabilityEngine
 from engines.confidence_engine import ConfidenceEngine
 from engines.footprint_engine import FootprintEngine
 from engines.ml_training_engine import MLTrainingEngine
+from engines.mt5_quote_bridge import get_live_quote
 from engines.qualification_engine import (
     evaluate_dataset_quality_rule,
     evaluate_confidence_quality_rule,
@@ -40,14 +41,14 @@ from engines.qualification_engine import (
 # STEP126 Runtime / Research Mode
 # ==========================================
 
-RUNTIME_MODE = "RESEARCH"
+RUNTIME_MODE = "RUNTIME"
 
 # Available modes:
 # "RUNTIME"
 # "RESEARCH"
 # "TRAINING"
 
-SHOW_RUNTIME_DETAILS = True
+SHOW_RUNTIME_DETAILS = False
 
 def build_runtime_readiness_report():
 
@@ -378,7 +379,15 @@ scenario_list = [
     "SELL_STACK",
 ]
 
+def get_runtime_ticks():
 
+    runtime_tick_file = (
+        "data/runtime_ticks.csv"
+    )
+
+    return load_ticks_from_csv(
+        runtime_tick_file
+    )
 
 def get_ticks_by_scenario(scenario):
 
@@ -515,7 +524,29 @@ def print_footprint_decision_alignment_audit(
     else:
         print("Alignment Status: WEAK_OR_NEUTRAL_FOOTPRINT")
 
-# ticks = get_ticks_by_scenario(scenario)
+    if RUNTIME_MODE == "RUNTIME":
+
+        live_quote = get_live_quote()
+
+        if live_quote is None:
+            print(
+                "RUNTIME LIVE QUOTE ERROR"
+            )
+            return
+
+        print(
+            "\n----- MT5 Live Quote Runtime -----"
+        )
+
+        live_quote.show()
+
+        ticks = get_runtime_ticks()
+
+    else:
+        ticks = get_ticks_by_scenario(
+            scenario
+        )
+
 def run_scenario(scenario):
 
     volume_engine = VolumeEngine()
@@ -1246,24 +1277,33 @@ def run_scenario(scenario):
             "data/replay_results.csv"
         )
 
-    dataset_saved = save_dataset_record(
-        dataset_file_path,
-        dataset_record
-    )
+    if RUNTIME_MODE == "RUNTIME":
 
+        dataset_saved = True
 
-
-    if dataset_saved:
         print(
-            f"Dataset record saved: "
-            f"{dataset_file_path}"
+            "RUNTIME DRY RUN - "
+            "dataset write skipped."
         )
 
     else:
-        print(
-            "Dataset record NOT saved "
-            "due to schema mismatch."
+
+        dataset_saved = save_dataset_record(
+            dataset_file_path,
+            dataset_record
         )
+
+        if dataset_saved:
+            print(
+                f"Dataset record saved: "
+                f"{dataset_file_path}"
+            )
+
+        else:
+            print(
+                "Dataset record NOT saved "
+                "due to schema mismatch."
+            )
 
 
 for scenario in scenario_list:
