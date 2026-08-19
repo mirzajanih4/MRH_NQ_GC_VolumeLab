@@ -29,6 +29,7 @@ from engines.confidence_engine import ConfidenceEngine
 from engines.footprint_engine import FootprintEngine
 from engines.ml_training_engine import MLTrainingEngine
 from engines.mt5_quote_bridge import get_live_quote
+from core.runtime_observation import RuntimeObservation
 from engines.qualification_engine import (
     evaluate_dataset_quality_rule,
     evaluate_confidence_quality_rule,
@@ -49,6 +50,8 @@ RUNTIME_MODE = "RUNTIME"
 # "TRAINING"
 
 SHOW_RUNTIME_DETAILS = False
+
+previous_runtime_quote = None
 
 def build_runtime_readiness_report():
 
@@ -1305,17 +1308,101 @@ def run_scenario(scenario):
                 "due to schema mismatch."
             )
 
+if RUNTIME_MODE in (
+        "RESEARCH",
+        "TRAINING"
+):
 
-for scenario in scenario_list:
+    for scenario in scenario_list:
 
-    print()
-    print("===================================")
-    print(f"RUNNING SCENARIO: {scenario}")
-    print("===================================")
+        print()
+        print("===================================")
+        print(f"RUNNING SCENARIO: {scenario}")
+        print("===================================")
 
-    run_scenario(scenario)
-analytics_engine = AnalyticsEngine("data/replay_results.csv")
-probability_engine = ProbabilityEngine(analytics_engine)
+        run_scenario(scenario)
+
+
+def run_live_runtime_observation():
+    global previous_runtime_quote
+
+    live_quote = get_live_quote()
+
+    if live_quote is None:
+        print(
+            "RUNTIME LIVE QUOTE ERROR"
+        )
+        return
+
+    if previous_runtime_quote is None:
+        print(
+            "\n----- MT5 Runtime Observation -----"
+        )
+
+        print(
+            f"WARMUP | "
+            f"Time={live_quote.timestamp} | "
+            f"Bid={live_quote.bid} | "
+            f"Ask={live_quote.ask} | "
+            f"Mid={live_quote.mid_price}"
+        )
+
+        previous_runtime_quote = (
+            live_quote
+        )
+
+        return
+
+    observation = RuntimeObservation(
+        previous_runtime_quote,
+        live_quote
+    )
+
+    print(
+        "\n----- MT5 Runtime Observation -----"
+    )
+
+    observation.show()
+
+    previous_runtime_quote = (
+        live_quote
+    )
+
+
+if RUNTIME_MODE == "RUNTIME":
+
+    import time
+
+    for runtime_cycle in range(5):
+
+        print(
+            f"\nRUNTIME CYCLE "
+            f"{runtime_cycle + 1}/5"
+        )
+
+        run_live_runtime_observation()
+
+        if runtime_cycle < 4:
+            time.sleep(2)
+
+    print(
+        "\nRUNTIME OBSERVATION "
+        "MULTI-CYCLE COMPLETE"
+    )
+
+    raise SystemExit(0)
+
+
+analytics_engine = AnalyticsEngine(
+    "data/replay_results.csv"
+)
+
+
+probability_engine = ProbabilityEngine(
+    analytics_engine
+)
+
+
 print("----- Dataset Analytics -----")
 print(f"Final Signal Counts: {analytics_engine.count_by_field('final_signal')}")
 print(f"Setup Type Counts: {analytics_engine.count_by_field('setup_type')}")
@@ -2344,10 +2431,15 @@ if RUNTIME_MODE in ("RESEARCH", "TRAINING"):
 
     print("Probability Model Snapshot saved.")
 
-for scenario in scenario_list:
+if RUNTIME_MODE in (
+        "RESEARCH",
+        "TRAINING"
+):
 
-    print(
-        f"\n===== RUNNING SCENARIO: {scenario} ====="
-    )
+    for scenario in scenario_list:
 
-    run_scenario(scenario)
+        print(
+            f"\n===== RUNNING SCENARIO: {scenario} ====="
+        )
+
+        run_scenario(scenario)
